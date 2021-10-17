@@ -33,12 +33,20 @@ class Ec2LaunchTemplateOptions(ResourceOptions):
     monitoring: bool
     ami: str
     associatePublicIpAddress: bool
+    # blockDeviceMapping: Mapping[str, BlockdevicemappingOptions]
+    # ebsBoot: bool
     ebsInitialRootDiskSize: int
+    # ebsOptimized: bool
+    # fileSystems: Optional[Mapping[str, FilesystemsOptions]]
     instanceProfile: str
     instanceType: str
     keyPair: str
+    # physicalProperties: Mapping[str, Union[int, str, bool]]
     placementGroup: str
+    # privateKey: str
     securityGroupIds: Sequence[str]
+    # securityGroups: Sequence[str]
+    # sourceDestCheck: bool
     spotInstanceInterruptionBehavior: Union[
         Literal["terminate"], Literal["stop"], Literal["hibernate"],
     ]
@@ -51,4 +59,5 @@ class Ec2LaunchTemplateOptions(ResourceOptions):
     tenancy: Union[
         Literal["default"], Literal["dedicated"], Literal["host"],
     ]
+    # usePrivateIpAddress: bool
     zone: str

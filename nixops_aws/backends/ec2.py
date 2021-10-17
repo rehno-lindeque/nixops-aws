@@ -21,7 +21,7 @@ import datetime
 from typing import Dict, Tuple, Any, Union, List
 from nixops_aws.resources.ec2_common import EC2CommonState
 from nixops_aws.resources.elastic_ip import ElasticIPState
-from .options import EC2MachineOptions
+from .ec2_options import EC2MachineOptions
 
 
 class EC2InstanceDisappeared(Exception):

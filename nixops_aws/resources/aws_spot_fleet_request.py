@@ -4,12 +4,15 @@ import boto3
 import nixops.util
 from nixops.resources import ResourceDefinition
 from nixops.resources import ResourceState
+# from nixops.resources import ResourceEval
 import nixops_aws.ec2_utils
 import botocore.exceptions
 from . import ec2_common
 from .iam_role import IAMRoleState
 
 from .types.aws_spot_fleet import SpotFleetRequestOptions
+
+# from mypy_boto3_ec2 import type_defs
 
 
 if TYPE_CHECKING:
@@ -60,6 +63,15 @@ class awsSpotFleetRequestDefinition(ResourceDefinition):
     @classmethod
     def get_resource_type(cls):
         return "awsSpotFleetRequest"
+
+    # def __init__(self, name: str, config: ResourceEval):
+    #     aws_config = dict(**config["awsConfig"])
+    #     aws_config["DryRun"] = False
+    #     updated_config = {
+    #         k: config[k] for k in config if k != "awsConfig"
+    #     }
+    #     updated_config["awsConfig"] = type_defs.RequestSpotFleetRequestRequestTypeDef(aws_config, total=False)
+    #     nixops.resources.ResourceDefinition.__init__(self, name, ResourceEval(updated_config))
 
     def show_type(self):
         return "{0}".format(self.get_type())
@@ -152,13 +164,13 @@ class awsSpotFleetRequestState(ResourceState, ec2_common.EC2CommonState):
         (access_key_id, secret_access_key) = nixops_aws.ec2_utils.fetch_aws_secret_key(
             self.access_key_id
         )
-        client = boto3.session.Session().client(
+        self._client = boto3.session.Session().client(
             service_name=service,
             region_name=self.region,
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
         )
-        return client
+        return self._client
 
     def create(
         self,
@@ -202,7 +214,7 @@ class awsSpotFleetRequestState(ResourceState, ec2_common.EC2CommonState):
             mutable_diff = [
                 k for k in mutable_values if getattr(self, k) != mutable_values[k]
             ]  # TODO dict diff
-            if True or mutable_diff:
+            if mutable_diff:
                 request = ModifySpotFleetRequestRequestRequestTypeDef(
                     # ExcessCapacityTerminationPolicy=
                     # LaunchTemplateConfigs=

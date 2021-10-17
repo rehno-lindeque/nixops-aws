@@ -9,6 +9,7 @@ __all__ = (
     "cloudwatch_metric_alarm",
     "ebs_volume",
     "ec2_common",
+    "ec2_instances",
     "ec2_keypair",
     "ec2_placement_group",
     "ec2_rds_dbinstance",
@@ -52,6 +53,7 @@ from . import cloudwatch_log_stream
 from . import cloudwatch_metric_alarm
 from . import ebs_volume
 from . import ec2_common
+from . import ec2_instances
 from . import ec2_keypair
 from . import ec2_placement_group
 from . import ec2_rds_dbinstance

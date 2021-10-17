@@ -13,6 +13,7 @@ class NixopsAWSPlugin(Plugin):
         return [
             "nixops_aws.resources",
             "nixops_aws.backends.ec2",
+            "nixops_aws.backends.ec2_target",
             "nixops_aws.resources.ec2_keypair",
         ]
 

@@ -1,13 +1,15 @@
 {
   config_exporters = { optionalAttrs, ... }: [
     (config: { ec2 = optionalAttrs (config.deployment.targetEnv == "ec2") config.deployment.ec2; })
+    (config: { ec2target = optionalAttrs (config.deployment.targetEnv == "ec2-target") { inherit (config.deployment.ec2) target; }; })
     (config: { route53 = config.deployment.route53; })
   ];
   options = [
     ./ec2.nix
+    ./ec2-target.nix
     ./route53.nix
   ];
-  resources = { evalResources, zipAttrs, resourcesByType, ... }: {
+  resources = args@{ evalResources, zipAttrs, resourcesByType, ... }: {
     snsTopics = evalResources ./sns-topic.nix (zipAttrs resourcesByType.snsTopics or []);
     sqsQueues = evalResources ./sqs-queue.nix (zipAttrs resourcesByType.sqsQueues or []);
     ec2KeyPairs = evalResources ./ec2-keypair.nix (zipAttrs resourcesByType.ec2KeyPairs or []);
@@ -48,5 +50,9 @@
     awsDataLifecycleManager = evalResources ./aws-data-lifecycle-manager.nix (zipAttrs resourcesByType.awsDataLifecycleManager or []);
     awsEc2LaunchTemplate = evalResources ./aws-ec2-launch-template.nix (zipAttrs resourcesByType.awsEc2LaunchTemplate or []);
     awsSpotFleetRequest = evalResources ./aws-spot-fleet-request.nix (zipAttrs resourcesByType.awsSpotFleetRequest or []);
+
+    # New style resources
+    ec2Instances = evalResources ./ec2-instances.nix (zipAttrs resourcesByType.ec2Instances or []);
+    # awsEc2Instances = evalResources ./ec2-instances.nix args;
   };
 }
