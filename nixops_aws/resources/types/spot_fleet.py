@@ -205,34 +205,33 @@ class EbsBlockDeviceOptions(ResourceOptions):
 
 def unpack_ebs_block_device(
     config: EbsBlockDeviceOptions,
-    **kwargs,
 ) -> EbsBlockDeviceTypeDef:
     r = EbsBlockDeviceTypeDef()
-    DeleteOnTermination = kwargs.get("DeleteOnTermination", config.deleteOnTermination)
+    DeleteOnTermination = config.deleteOnTermination
     if DeleteOnTermination is not None:
         r["DeleteOnTermination"] = DeleteOnTermination
-    Encrypted = kwargs.get("Encrypted", config.encrypted)
+    Encrypted = config.encrypted
     if Encrypted is not None:
         r["Encrypted"] = Encrypted
-    Iops = kwargs.get("Iops", config.iops)
+    Iops = config.iops
     if Iops is not None:
         r["Iops"] = Iops
-    KmsKeyId = kwargs.get("KmsKeyId", config.kmsKeyId)
+    KmsKeyId = config.kmsKeyId
     if KmsKeyId is not None:
         r["KmsKeyId"] = KmsKeyId
-    OutpostArn = kwargs.get("OutpostArn", config.outpostArn)
+    OutpostArn = config.outpostArn
     if OutpostArn is not None:
         r["OutpostArn"] = OutpostArn
-    SnapshotId = kwargs.get("SnapshotId", config.snapshotId)
+    SnapshotId = config.snapshotId
     if SnapshotId is not None:
         r["SnapshotId"] = SnapshotId
-    Throughput = kwargs.get("Throughput", config.throughput)
+    Throughput = config.throughput
     if Throughput is not None:
         r["Throughput"] = Throughput
-    VolumeSize = kwargs.get("VolumeSize", config.volumeSize)
+    VolumeSize = config.volumeSize
     if VolumeSize is not None:
         r["VolumeSize"] = VolumeSize
-    VolumeType = kwargs.get("VolumeType", config.volumeType)
+    VolumeType = config.volumeType
     if VolumeType is not None:
         r["VolumeType"] = VolumeType
     return r
@@ -247,23 +246,18 @@ class BlockDeviceMappingOptions(ResourceOptions):
 
 def unpack_block_device_mapping(
     config: BlockDeviceMappingOptions,
-    **kwargs,
 ) -> BlockDeviceMappingTypeDef:
     r = BlockDeviceMappingTypeDef()
-    DeviceName = kwargs.get("DeviceName", config.deviceName)
+    DeviceName = config.deviceName
     if DeviceName is not None:
         r["DeviceName"] = DeviceName
-    Ebs = (
-        unpack_ebs_block_device(config.ebs, **kwargs.get("Ebs", {}))
-        if config.ebs
-        else kwargs.get("Ebs")
-    )
+    Ebs = unpack_ebs_block_device(config.ebs)
     if Ebs is not None:
         r["Ebs"] = Ebs
-    NoDevice = kwargs.get("NoDevice", config.noDevice)
+    NoDevice = config.noDevice
     if NoDevice is not None:
         r["NoDevice"] = NoDevice
-    VirtualName = kwargs.get("VirtualName", config.virtualName)
+    VirtualName = config.virtualName
     if VirtualName is not None:
         r["VirtualName"] = VirtualName
     return r
@@ -276,13 +270,12 @@ class IamInstanceProfileSpecificationOptions(ResourceOptions):
 
 def unpack_iam_instance_profile_specification(
     config: IamInstanceProfileSpecificationOptions,
-    **kwargs,
 ) -> IamInstanceProfileSpecificationTypeDef:
     r = IamInstanceProfileSpecificationTypeDef()
-    Arn = kwargs.get("Arn", config.arn)
+    Arn = config.arn
     if Arn is not None:
         r["Arn"] = Arn
-    Name = kwargs.get("Name", config.name)
+    Name = config.name
     if Name is not None:
         r["Name"] = Name
     return r
@@ -294,10 +287,9 @@ class SpotFleetMonitoringOptions(ResourceOptions):
 
 def unpack_spot_fleet_monitoring(
     config: SpotFleetMonitoringOptions,
-    **kwargs,
 ) -> SpotFleetMonitoringTypeDef:
     r = SpotFleetMonitoringTypeDef()
-    Enabled = kwargs.get("Enabled", config.enabled)
+    Enabled = config.enabled
     if Enabled is not None:
         r["Enabled"] = Enabled
     return r
@@ -309,10 +301,9 @@ class Ipv4PrefixSpecificationOptions(ResourceOptions):
 
 def unpack_ipv4_prefix_specification(
     config: Ipv4PrefixSpecificationOptions,
-    **kwargs,
 ) -> Ipv4PrefixSpecificationRequestTypeDef:
     r = Ipv4PrefixSpecificationRequestTypeDef()
-    Ipv4Prefix = kwargs.get("Ipv4Prefix", config.ipv4Prefix)
+    Ipv4Prefix = config.ipv4Prefix
     if Ipv4Prefix is not None:
         r["Ipv4Prefix"] = Ipv4Prefix
     return r
@@ -324,10 +315,9 @@ class InstanceIpv6AddressOptions(ResourceOptions):
 
 def unpack_instance_ipv6_address(
     config: InstanceIpv6AddressOptions,
-    **kwargs,
 ) -> InstanceIpv6AddressTypeDef:
     r = InstanceIpv6AddressTypeDef()
-    Ipv6Address = kwargs.get("Ipv6Address", config.ipv6Address)
+    Ipv6Address = config.ipv6Address
     if Ipv6Address is not None:
         r["Ipv6Address"] = Ipv6Address
     return r
@@ -339,10 +329,9 @@ class Ipv6PrefixSpecificationOptions(ResourceOptions):
 
 def unpack_ipv6_prefix_specification(
     config: Ipv6PrefixSpecificationOptions,
-    **kwargs,
 ) -> Ipv6PrefixSpecificationRequestTypeDef:
     r = Ipv6PrefixSpecificationRequestTypeDef()
-    Ipv6Prefix = kwargs.get("Ipv6Prefix", config.ipv6Prefix)
+    Ipv6Prefix = config.ipv6Prefix
     if Ipv6Prefix is not None:
         r["Ipv6Prefix"] = Ipv6Prefix
     return r
@@ -355,13 +344,12 @@ class PrivateIpAddressSpecificationOptions(ResourceOptions):
 
 def unpack_private_ip_address_specification(
     config: PrivateIpAddressSpecificationOptions,
-    **kwargs,
 ) -> PrivateIpAddressSpecificationTypeDef:
     r = PrivateIpAddressSpecificationTypeDef()
-    Primary = kwargs.get("Primary", config.primary)
+    Primary = config.primary
     if Primary is not None:
         r["Primary"] = Primary
-    PrivateIpAddress = kwargs.get("PrivateIpAddress", config.privateIpAddress)
+    PrivateIpAddress = config.privateIpAddress
     if PrivateIpAddress is not None:
         r["PrivateIpAddress"] = PrivateIpAddress
     return r
@@ -391,106 +379,67 @@ class InstanceNetworkInterfaceSpecificationOptions(ResourceOptions):
 
 def unpack_instance_network_interface_specification(
     config: InstanceNetworkInterfaceSpecificationOptions,
-    **kwargs,
 ) -> InstanceNetworkInterfaceSpecificationTypeDef:
     r = InstanceNetworkInterfaceSpecificationTypeDef()
-    AssociateCarrierIpAddress = kwargs.get(
-        "AssociateCarrierIpAddress", config.associateCarrierIpAddress
-    )
+    AssociateCarrierIpAddress = config.associateCarrierIpAddress
     if AssociateCarrierIpAddress is not None:
         r["AssociateCarrierIpAddress"] = AssociateCarrierIpAddress
-    AssociatePublicIpAddress = kwargs.get(
-        "AssociatePublicIpAddress", config.associatePublicIpAddress
-    )
+    AssociatePublicIpAddress = config.associatePublicIpAddress
     if AssociatePublicIpAddress is not None:
         r["AssociatePublicIpAddress"] = AssociatePublicIpAddress
-    DeleteOnTermination = kwargs.get("DeleteOnTermination", config.deleteOnTermination)
+    DeleteOnTermination = config.deleteOnTermination
     if DeleteOnTermination is not None:
         r["DeleteOnTermination"] = DeleteOnTermination
-    Description = kwargs.get("Description", config.description)
+    Description = config.description
     if Description is not None:
         r["Description"] = Description
-    DeviceIndex = kwargs.get("DeviceIndex", config.deviceIndex)
+    DeviceIndex = config.deviceIndex
     if DeviceIndex is not None:
         r["DeviceIndex"] = DeviceIndex
-    Groups = kwargs.get("Groups", list(config.groups) if config.groups else None)
+    Groups = list(config.groups) if config.groups else None
     if Groups is not None:
         r["Groups"] = Groups
-    InterfaceType = kwargs.get("InterfaceType", config.interfaceType)
+    InterfaceType = config.interfaceType
     if InterfaceType is not None:
         r["InterfaceType"] = InterfaceType
-    Ipv4PrefixCount = kwargs.get("Ipv4PrefixCount", config.ipv4PrefixCount)
+    Ipv4PrefixCount = config.ipv4PrefixCount
     if Ipv4PrefixCount is not None:
         r["Ipv4PrefixCount"] = Ipv4PrefixCount
-    Ipv4Prefixes = (
-        [
-            unpack_ipv4_prefix_specification(c, **overrides)
-            for c, overrides in zip(
-                config.ipv4Prefixes, kwargs.get("Ipv4Prefixes", repeat({}))
-            )
-        ]
-        if config.ipv4Prefixes
-        else kwargs.get("Ipv4Prefixes")
-    )
+    Ipv4Prefixes = [unpack_ipv4_prefix_specification(c) for c in config.ipv4Prefixes]
     if Ipv4Prefixes is not None:
         r["Ipv4Prefixes"] = Ipv4Prefixes
-    Ipv6AddressCount = kwargs.get("Ipv6AddressCount", config.ipv6AddressCount)
+    Ipv6AddressCount = config.ipv6AddressCount
     if Ipv6AddressCount is not None:
         r["Ipv6AddressCount"] = Ipv6AddressCount
-    Ipv6Addresses = (
-        [
-            unpack_instance_ipv6_address(c, **overrides)
-            for c, overrides in zip(
-                config.ipv6Addresses, kwargs.get("Ipv6Addresses", repeat({}))
-            )
-        ]
-        if config.ipv6Addresses
-        else kwargs.get("Ipv6Addresses")
-    )
+    Ipv6Addresses = [unpack_instance_ipv6_address(c) for c in config.ipv6Addresses]
     if Ipv6Addresses is not None:
         r["Ipv6Addresses"] = Ipv6Addresses
-    Ipv6PrefixCount = kwargs.get("Ipv6PrefixCount", config.ipv6PrefixCount)
+    Ipv6PrefixCount = config.ipv6PrefixCount
     if Ipv6PrefixCount is not None:
         r["Ipv6PrefixCount"] = Ipv6PrefixCount
-    Ipv6Prefixes = (
-        [
-            unpack_ipv6_prefix_specification(c, **overrides)
-            for c, overrides in zip(
-                config.ipv6Prefixes, kwargs.get("Ipv6Prefixes", repeat({}))
-            )
-        ]
-        if config.ipv6Prefixes
-        else kwargs.get("Ipv6Prefixes")
-    )
+    Ipv6Prefixes = [unpack_ipv6_prefix_specification(c) for c in config.ipv6Prefixes]
     if Ipv6Prefixes is not None:
         r["Ipv6Prefixes"] = Ipv6Prefixes
-    NetworkCardIndex = kwargs.get("NetworkCardIndex", config.networkCardIndex)
+    NetworkCardIndex = config.networkCardIndex
     if NetworkCardIndex is not None:
         r["NetworkCardIndex"] = NetworkCardIndex
-    NetworkInterfaceId = kwargs.get("NetworkInterfaceId", config.networkInterfaceId)
+    NetworkInterfaceId = (
+        config.networkInterfaceId.value if config.networkInterfaceId else None
+    )
     if NetworkInterfaceId is not None:
         r["NetworkInterfaceId"] = NetworkInterfaceId
-    PrivateIpAddress = kwargs.get("PrivateIpAddress", config.privateIpAddress)
+    PrivateIpAddress = config.privateIpAddress
     if PrivateIpAddress is not None:
         r["PrivateIpAddress"] = PrivateIpAddress
-    PrivateIpAddresses = (
-        [
-            unpack_private_ip_address_specification(c, **overrides)
-            for c, overrides in zip(
-                config.privateIpAddresses, kwargs.get("PrivateIpAddresses", repeat({}))
-            )
-        ]
-        if config.privateIpAddresses
-        else kwargs.get("PrivateIpAddresses")
-    )
+    PrivateIpAddresses = [
+        unpack_private_ip_address_specification(c) for c in config.privateIpAddresses
+    ]
     if PrivateIpAddresses is not None:
         r["PrivateIpAddresses"] = PrivateIpAddresses
-    SecondaryPrivateIpAddressCount = kwargs.get(
-        "SecondaryPrivateIpAddressCount", config.secondaryPrivateIpAddressCount
-    )
+    SecondaryPrivateIpAddressCount = config.secondaryPrivateIpAddressCount
     if SecondaryPrivateIpAddressCount is not None:
         r["SecondaryPrivateIpAddressCount"] = SecondaryPrivateIpAddressCount
-    SubnetId = kwargs.get("SubnetId", config.subnetId)
+    SubnetId = config.subnetId.value if config.subnetId else None
     if SubnetId is not None:
         r["SubnetId"] = SubnetId
     return r
@@ -504,16 +453,15 @@ class SpotPlacementOptions(ResourceOptions):
 
 def unpack_spot_placement(
     config: SpotPlacementOptions,
-    **kwargs,
 ) -> SpotPlacementTypeDef:
     r = SpotPlacementTypeDef()
-    AvailabilityZone = kwargs.get("AvailabilityZone", config.availabilityZone)
+    AvailabilityZone = config.availabilityZone
     if AvailabilityZone is not None:
         r["AvailabilityZone"] = AvailabilityZone
-    GroupName = kwargs.get("GroupName", config.groupName)
+    GroupName = config.groupName
     if GroupName is not None:
         r["GroupName"] = GroupName
-    Tenancy = kwargs.get("Tenancy", config.tenancy)
+    Tenancy = config.tenancy
     if Tenancy is not None:
         r["Tenancy"] = Tenancy
     return r
@@ -526,13 +474,12 @@ class GroupIdentifierOptions(ResourceOptions):
 
 def unpack_group_identifier(
     config: GroupIdentifierOptions,
-    **kwargs,
 ) -> GroupIdentifierTypeDef:
     r = GroupIdentifierTypeDef()
-    GroupId = kwargs.get("GroupId", config.groupId)
+    GroupId = config.groupId.value if config.groupId else None
     if GroupId is not None:
         r["GroupId"] = GroupId
-    GroupName = kwargs.get("GroupName", config.groupName)
+    GroupName = config.groupName
     if GroupName is not None:
         r["GroupName"] = GroupName
     return r
@@ -561,100 +508,64 @@ class SpotFleetLaunchSpecificationOptions(ResourceOptions):
 
 def unpack_spot_fleet_launch_specification(
     config: SpotFleetLaunchSpecificationOptions,
-    **kwargs,
 ) -> SpotFleetLaunchSpecificationTypeDef:
     r = SpotFleetLaunchSpecificationTypeDef()
-    AddressingType = kwargs.get("AddressingType", config.addressingType)
+    AddressingType = config.addressingType
     if AddressingType is not None:
         r["AddressingType"] = AddressingType
-    BlockDeviceMappings = (
-        [
-            unpack_block_device_mapping(c, **overrides)
-            for c, overrides in zip(
-                config.blockDeviceMappings,
-                kwargs.get("BlockDeviceMappings", repeat({})),
-            )
-        ]
-        if config.blockDeviceMappings
-        else kwargs.get("BlockDeviceMappings")
-    )
+    BlockDeviceMappings = [
+        unpack_block_device_mapping(c) for c in config.blockDeviceMappings
+    ]
     if BlockDeviceMappings is not None:
         r["BlockDeviceMappings"] = BlockDeviceMappings
-    EbsOptimized = kwargs.get("EbsOptimized", config.ebsOptimized)
+    EbsOptimized = config.ebsOptimized
     if EbsOptimized is not None:
         r["EbsOptimized"] = EbsOptimized
-    IamInstanceProfile = (
-        unpack_iam_instance_profile_specification(
-            config.iamInstanceProfile, **kwargs.get("IamInstanceProfile", {})
-        )
-        if config.iamInstanceProfile
-        else kwargs.get("IamInstanceProfile")
+    IamInstanceProfile = unpack_iam_instance_profile_specification(
+        config.iamInstanceProfile
     )
     if IamInstanceProfile is not None:
         r["IamInstanceProfile"] = IamInstanceProfile
-    ImageId = kwargs.get("ImageId", config.imageId)
+    ImageId = config.imageId
     if ImageId is not None:
         r["ImageId"] = ImageId
-    InstanceType = kwargs.get("InstanceType", config.instanceType)
+    InstanceType = config.instanceType
     if InstanceType is not None:
         r["InstanceType"] = InstanceType
-    KernelId = kwargs.get("KernelId", config.kernelId)
+    KernelId = config.kernelId
     if KernelId is not None:
         r["KernelId"] = KernelId
-    KeyName = kwargs.get("KeyName", config.keyName)
+    KeyName = config.keyName
     if KeyName is not None:
         r["KeyName"] = KeyName
-    Monitoring = (
-        unpack_spot_fleet_monitoring(config.monitoring, **kwargs.get("Monitoring", {}))
-        if config.monitoring
-        else kwargs.get("Monitoring")
-    )
+    Monitoring = unpack_spot_fleet_monitoring(config.monitoring)
     if Monitoring is not None:
         r["Monitoring"] = Monitoring
-    NetworkInterfaces = (
-        [
-            unpack_instance_network_interface_specification(c, **overrides)
-            for c, overrides in zip(
-                config.networkInterfaces, kwargs.get("NetworkInterfaces", repeat({}))
-            )
-        ]
-        if config.networkInterfaces
-        else kwargs.get("NetworkInterfaces")
-    )
+    NetworkInterfaces = [
+        unpack_instance_network_interface_specification(c)
+        for c in config.networkInterfaces
+    ]
     if NetworkInterfaces is not None:
         r["NetworkInterfaces"] = NetworkInterfaces
-    Placement = (
-        unpack_spot_placement(config.placement, **kwargs.get("Placement", {}))
-        if config.placement
-        else kwargs.get("Placement")
-    )
+    Placement = unpack_spot_placement(config.placement)
     if Placement is not None:
         r["Placement"] = Placement
-    RamdiskId = kwargs.get("RamdiskId", config.ramdiskId)
+    RamdiskId = config.ramdiskId
     if RamdiskId is not None:
         r["RamdiskId"] = RamdiskId
-    SecurityGroups = (
-        [
-            unpack_group_identifier(c, **overrides)
-            for c, overrides in zip(
-                config.securityGroups, kwargs.get("SecurityGroups", repeat({}))
-            )
-        ]
-        if config.securityGroups
-        else kwargs.get("SecurityGroups")
-    )
+    SecurityGroups = [unpack_group_identifier(c) for c in config.securityGroups]
     if SecurityGroups is not None:
         r["SecurityGroups"] = SecurityGroups
-    SpotPrice = kwargs.get("SpotPrice", config.spotPrice)
+    SpotPrice = config.spotPrice
     if SpotPrice is not None:
         r["SpotPrice"] = SpotPrice
-    SubnetId = kwargs.get("SubnetId", config.subnetId)
+    SubnetId = config.subnetId.value if config.subnetId else None
     if SubnetId is not None:
         r["SubnetId"] = SubnetId
-    UserData = kwargs.get("UserData", config.userData)
+    UserData = config.userData
     if UserData is not None:
         r["UserData"] = UserData
-    WeightedCapacity = kwargs.get("WeightedCapacity", config.weightedCapacity)
+    WeightedCapacity = config.weightedCapacity
     if WeightedCapacity is not None:
         r["WeightedCapacity"] = WeightedCapacity
     return r
@@ -668,16 +579,17 @@ class FleetLaunchTemplateSpecificationOptions(ResourceOptions):
 
 def unpack_fleet_launch_template_specification(
     config: FleetLaunchTemplateSpecificationOptions,
-    **kwargs,
 ) -> FleetLaunchTemplateSpecificationTypeDef:
     r = FleetLaunchTemplateSpecificationTypeDef()
-    LaunchTemplateId = kwargs.get("LaunchTemplateId", config.launchTemplateId)
+    LaunchTemplateId = (
+        config.launchTemplateId.value if config.launchTemplateId else None
+    )
     if LaunchTemplateId is not None:
         r["LaunchTemplateId"] = LaunchTemplateId
-    LaunchTemplateName = kwargs.get("LaunchTemplateName", config.launchTemplateName)
+    LaunchTemplateName = config.launchTemplateName
     if LaunchTemplateName is not None:
         r["LaunchTemplateName"] = LaunchTemplateName
-    Version = kwargs.get("Version", config.version)
+    Version = config.version
     if Version is not None:
         r["Version"] = Version
     return r
@@ -694,25 +606,24 @@ class LaunchTemplateOverridesOptions(ResourceOptions):
 
 def unpack_launch_template_overrides(
     config: LaunchTemplateOverridesOptions,
-    **kwargs,
 ) -> LaunchTemplateOverridesTypeDef:
     r = LaunchTemplateOverridesTypeDef()
-    AvailabilityZone = kwargs.get("AvailabilityZone", config.availabilityZone)
+    AvailabilityZone = config.availabilityZone
     if AvailabilityZone is not None:
         r["AvailabilityZone"] = AvailabilityZone
-    InstanceType = kwargs.get("InstanceType", config.instanceType)
+    InstanceType = config.instanceType
     if InstanceType is not None:
         r["InstanceType"] = InstanceType
-    Priority = kwargs.get("Priority", config.priority)
+    Priority = config.priority
     if Priority is not None:
         r["Priority"] = Priority
-    SpotPrice = kwargs.get("SpotPrice", config.spotPrice)
+    SpotPrice = config.spotPrice
     if SpotPrice is not None:
         r["SpotPrice"] = SpotPrice
-    SubnetId = kwargs.get("SubnetId", config.subnetId)
+    SubnetId = config.subnetId.value if config.subnetId else None
     if SubnetId is not None:
         r["SubnetId"] = SubnetId
-    WeightedCapacity = kwargs.get("WeightedCapacity", config.weightedCapacity)
+    WeightedCapacity = config.weightedCapacity
     if WeightedCapacity is not None:
         r["WeightedCapacity"] = WeightedCapacity
     return r
@@ -725,29 +636,14 @@ class LaunchTemplateConfigOptions(ResourceOptions):
 
 def unpack_launch_template_config(
     config: LaunchTemplateConfigOptions,
-    **kwargs,
 ) -> LaunchTemplateConfigTypeDef:
     r = LaunchTemplateConfigTypeDef()
-    LaunchTemplateSpecification = (
-        unpack_fleet_launch_template_specification(
-            config.launchTemplateSpecification,
-            **kwargs.get("LaunchTemplateSpecification", {}),
-        )
-        if config.launchTemplateSpecification
-        else kwargs.get("LaunchTemplateSpecification")
+    LaunchTemplateSpecification = unpack_fleet_launch_template_specification(
+        config.launchTemplateSpecification
     )
     if LaunchTemplateSpecification is not None:
         r["LaunchTemplateSpecification"] = LaunchTemplateSpecification
-    Overrides = (
-        [
-            unpack_launch_template_overrides(c, **overrides)
-            for c, overrides in zip(
-                config.overrides, kwargs.get("Overrides", repeat({}))
-            )
-        ]
-        if config.overrides
-        else kwargs.get("Overrides")
-    )
+    Overrides = [unpack_launch_template_overrides(c) for c in config.overrides]
     if Overrides is not None:
         r["Overrides"] = Overrides
     return r
@@ -759,10 +655,9 @@ class ClassicLoadBalancerOptions(ResourceOptions):
 
 def unpack_classic_load_balancer(
     config: ClassicLoadBalancerOptions,
-    **kwargs,
 ) -> ClassicLoadBalancerTypeDef:
     r = ClassicLoadBalancerTypeDef()
-    Name = kwargs.get("Name", config.name)
+    Name = config.name
     if Name is not None:
         r["Name"] = Name
     return r
@@ -774,20 +669,11 @@ class ClassicLoadBalancersConfigOptions(ResourceOptions):
 
 def unpack_classic_load_balancers_config(
     config: ClassicLoadBalancersConfigOptions,
-    **kwargs,
 ) -> ClassicLoadBalancersConfigTypeDef:
     r = ClassicLoadBalancersConfigTypeDef()
-    ClassicLoadBalancers = (
-        [
-            unpack_classic_load_balancer(c, **overrides)
-            for c, overrides in zip(
-                config.classicLoadBalancers,
-                kwargs.get("ClassicLoadBalancers", repeat({})),
-            )
-        ]
-        if config.classicLoadBalancers
-        else kwargs.get("ClassicLoadBalancers")
-    )
+    ClassicLoadBalancers = [
+        unpack_classic_load_balancer(c) for c in config.classicLoadBalancers
+    ]
     if ClassicLoadBalancers is not None:
         r["ClassicLoadBalancers"] = ClassicLoadBalancers
     return r
@@ -799,10 +685,9 @@ class TargetGroupOptions(ResourceOptions):
 
 def unpack_target_group(
     config: TargetGroupOptions,
-    **kwargs,
 ) -> TargetGroupTypeDef:
     r = TargetGroupTypeDef()
-    Arn = kwargs.get("Arn", config.arn)
+    Arn = config.arn
     if Arn is not None:
         r["Arn"] = Arn
     return r
@@ -814,19 +699,9 @@ class TargetGroupsConfigOptions(ResourceOptions):
 
 def unpack_target_groups_config(
     config: TargetGroupsConfigOptions,
-    **kwargs,
 ) -> TargetGroupsConfigTypeDef:
     r = TargetGroupsConfigTypeDef()
-    TargetGroups = (
-        [
-            unpack_target_group(c, **overrides)
-            for c, overrides in zip(
-                config.targetGroups, kwargs.get("TargetGroups", repeat({}))
-            )
-        ]
-        if config.targetGroups
-        else kwargs.get("TargetGroups")
-    )
+    TargetGroups = [unpack_target_group(c) for c in config.targetGroups]
     if TargetGroups is not None:
         r["TargetGroups"] = TargetGroups
     return r
@@ -839,26 +714,14 @@ class LoadBalancersConfigOptions(ResourceOptions):
 
 def unpack_load_balancers_config(
     config: LoadBalancersConfigOptions,
-    **kwargs,
 ) -> LoadBalancersConfigTypeDef:
     r = LoadBalancersConfigTypeDef()
-    ClassicLoadBalancersConfig = (
-        unpack_classic_load_balancers_config(
-            config.classicLoadBalancersConfig,
-            **kwargs.get("ClassicLoadBalancersConfig", {}),
-        )
-        if config.classicLoadBalancersConfig
-        else kwargs.get("ClassicLoadBalancersConfig")
+    ClassicLoadBalancersConfig = unpack_classic_load_balancers_config(
+        config.classicLoadBalancersConfig
     )
     if ClassicLoadBalancersConfig is not None:
         r["ClassicLoadBalancersConfig"] = ClassicLoadBalancersConfig
-    TargetGroupsConfig = (
-        unpack_target_groups_config(
-            config.targetGroupsConfig, **kwargs.get("TargetGroupsConfig", {})
-        )
-        if config.targetGroupsConfig
-        else kwargs.get("TargetGroupsConfig")
-    )
+    TargetGroupsConfig = unpack_target_groups_config(config.targetGroupsConfig)
     if TargetGroupsConfig is not None:
         r["TargetGroupsConfig"] = TargetGroupsConfig
     return r
@@ -870,10 +733,9 @@ class SpotCapacityRebalanceOptions(ResourceOptions):
 
 def unpack_spot_capacity_rebalance(
     config: SpotCapacityRebalanceOptions,
-    **kwargs,
 ) -> SpotCapacityRebalanceTypeDef:
     r = SpotCapacityRebalanceTypeDef()
-    ReplacementStrategy = kwargs.get("ReplacementStrategy", config.replacementStrategy)
+    ReplacementStrategy = config.replacementStrategy
     if ReplacementStrategy is not None:
         r["ReplacementStrategy"] = ReplacementStrategy
     return r
@@ -885,16 +747,9 @@ class SpotMaintenanceStrategiesOptions(ResourceOptions):
 
 def unpack_spot_maintenance_strategies(
     config: SpotMaintenanceStrategiesOptions,
-    **kwargs,
 ) -> SpotMaintenanceStrategiesTypeDef:
     r = SpotMaintenanceStrategiesTypeDef()
-    CapacityRebalance = (
-        unpack_spot_capacity_rebalance(
-            config.capacityRebalance, **kwargs.get("CapacityRebalance", {})
-        )
-        if config.capacityRebalance
-        else kwargs.get("CapacityRebalance")
-    )
+    CapacityRebalance = unpack_spot_capacity_rebalance(config.capacityRebalance)
     if CapacityRebalance is not None:
         r["CapacityRebalance"] = CapacityRebalance
     return r
@@ -952,115 +807,68 @@ class AwsSpotFleetOptions(ResourceOptions):
 
 def unpack_create_spot_fleet_request(
     config: AwsSpotFleetOptions,
-    **kwargs,
 ) -> SpotFleetRequestConfigDataTypeDef:
     r = SpotFleetRequestConfigDataTypeDef(
-        IamFleetRole=kwargs.get("IamFleetRole", config.iamFleetRole),
-        TargetCapacity=kwargs.get("TargetCapacity", config.targetCapacity),
+        IamFleetRole=config.iamFleetRole.value, TargetCapacity=config.targetCapacity
     )
-    AllocationStrategy = kwargs.get("AllocationStrategy", config.allocationStrategy)
+    AllocationStrategy = config.allocationStrategy
     if AllocationStrategy is not None:
         r["AllocationStrategy"] = AllocationStrategy
-    ExcessCapacityTerminationPolicy = kwargs.get(
-        "ExcessCapacityTerminationPolicy", config.excessCapacityTerminationPolicy
-    )
+    ExcessCapacityTerminationPolicy = config.excessCapacityTerminationPolicy
     if ExcessCapacityTerminationPolicy is not None:
         r["ExcessCapacityTerminationPolicy"] = ExcessCapacityTerminationPolicy
-    FulfilledCapacity = kwargs.get("FulfilledCapacity", config.fulfilledCapacity)
+    FulfilledCapacity = config.fulfilledCapacity
     if FulfilledCapacity is not None:
         r["FulfilledCapacity"] = FulfilledCapacity
-    InstanceInterruptionBehavior = kwargs.get(
-        "InstanceInterruptionBehavior", config.instanceInterruptionBehavior
-    )
+    InstanceInterruptionBehavior = config.instanceInterruptionBehavior
     if InstanceInterruptionBehavior is not None:
         r["InstanceInterruptionBehavior"] = InstanceInterruptionBehavior
-    InstancePoolsToUseCount = kwargs.get(
-        "InstancePoolsToUseCount", config.instancePoolsToUseCount
-    )
+    InstancePoolsToUseCount = config.instancePoolsToUseCount
     if InstancePoolsToUseCount is not None:
         r["InstancePoolsToUseCount"] = InstancePoolsToUseCount
-    LaunchSpecifications = (
-        [
-            unpack_spot_fleet_launch_specification(c, **overrides)
-            for c, overrides in zip(
-                config.launchSpecifications,
-                kwargs.get("LaunchSpecifications", repeat({})),
-            )
-        ]
-        if config.launchSpecifications
-        else kwargs.get("LaunchSpecifications")
-    )
+    LaunchSpecifications = [
+        unpack_spot_fleet_launch_specification(c) for c in config.launchSpecifications
+    ]
     if LaunchSpecifications is not None:
         r["LaunchSpecifications"] = LaunchSpecifications
-    LaunchTemplateConfigs = (
-        [
-            unpack_launch_template_config(c, **overrides)
-            for c, overrides in zip(
-                config.launchTemplateConfigs,
-                kwargs.get("LaunchTemplateConfigs", repeat({})),
-            )
-        ]
-        if config.launchTemplateConfigs
-        else kwargs.get("LaunchTemplateConfigs")
-    )
+    LaunchTemplateConfigs = [
+        unpack_launch_template_config(c) for c in config.launchTemplateConfigs
+    ]
     if LaunchTemplateConfigs is not None:
         r["LaunchTemplateConfigs"] = LaunchTemplateConfigs
-    LoadBalancersConfig = (
-        unpack_load_balancers_config(
-            config.loadBalancersConfig, **kwargs.get("LoadBalancersConfig", {})
-        )
-        if config.loadBalancersConfig
-        else kwargs.get("LoadBalancersConfig")
-    )
+    LoadBalancersConfig = unpack_load_balancers_config(config.loadBalancersConfig)
     if LoadBalancersConfig is not None:
         r["LoadBalancersConfig"] = LoadBalancersConfig
-    OnDemandAllocationStrategy = kwargs.get(
-        "OnDemandAllocationStrategy", config.onDemandAllocationStrategy
-    )
+    OnDemandAllocationStrategy = config.onDemandAllocationStrategy
     if OnDemandAllocationStrategy is not None:
         r["OnDemandAllocationStrategy"] = OnDemandAllocationStrategy
-    OnDemandFulfilledCapacity = kwargs.get(
-        "OnDemandFulfilledCapacity", config.onDemandFulfilledCapacity
-    )
+    OnDemandFulfilledCapacity = config.onDemandFulfilledCapacity
     if OnDemandFulfilledCapacity is not None:
         r["OnDemandFulfilledCapacity"] = OnDemandFulfilledCapacity
-    OnDemandMaxTotalPrice = kwargs.get(
-        "OnDemandMaxTotalPrice", config.onDemandMaxTotalPrice
-    )
+    OnDemandMaxTotalPrice = config.onDemandMaxTotalPrice
     if OnDemandMaxTotalPrice is not None:
         r["OnDemandMaxTotalPrice"] = OnDemandMaxTotalPrice
-    OnDemandTargetCapacity = kwargs.get(
-        "OnDemandTargetCapacity", config.onDemandTargetCapacity
-    )
+    OnDemandTargetCapacity = config.onDemandTargetCapacity
     if OnDemandTargetCapacity is not None:
         r["OnDemandTargetCapacity"] = OnDemandTargetCapacity
-    ReplaceUnhealthyInstances = kwargs.get(
-        "ReplaceUnhealthyInstances", config.replaceUnhealthyInstances
-    )
+    ReplaceUnhealthyInstances = config.replaceUnhealthyInstances
     if ReplaceUnhealthyInstances is not None:
         r["ReplaceUnhealthyInstances"] = ReplaceUnhealthyInstances
-    SpotMaintenanceStrategies = (
-        unpack_spot_maintenance_strategies(
-            config.spotMaintenanceStrategies,
-            **kwargs.get("SpotMaintenanceStrategies", {}),
-        )
-        if config.spotMaintenanceStrategies
-        else kwargs.get("SpotMaintenanceStrategies")
+    SpotMaintenanceStrategies = unpack_spot_maintenance_strategies(
+        config.spotMaintenanceStrategies
     )
     if SpotMaintenanceStrategies is not None:
         r["SpotMaintenanceStrategies"] = SpotMaintenanceStrategies
-    SpotMaxTotalPrice = kwargs.get("SpotMaxTotalPrice", config.spotMaxTotalPrice)
+    SpotMaxTotalPrice = config.spotMaxTotalPrice
     if SpotMaxTotalPrice is not None:
         r["SpotMaxTotalPrice"] = SpotMaxTotalPrice
-    SpotPrice = kwargs.get("SpotPrice", config.spotPrice)
+    SpotPrice = config.spotPrice
     if SpotPrice is not None:
         r["SpotPrice"] = SpotPrice
-    TerminateInstancesWithExpiration = kwargs.get(
-        "TerminateInstancesWithExpiration", config.terminateInstancesWithExpiration
-    )
+    TerminateInstancesWithExpiration = config.terminateInstancesWithExpiration
     if TerminateInstancesWithExpiration is not None:
         r["TerminateInstancesWithExpiration"] = TerminateInstancesWithExpiration
-    RequestType = kwargs.get("Type", config.type)
+    RequestType = config.type
     if RequestType is not None:
         r["Type"] = RequestType
     return r
@@ -1082,35 +890,22 @@ def unpack_create_spot_fleet_request(
 def unpack_modify_spot_fleet_request(
     config: AwsSpotFleetOptions,
     SpotFleetRequestId: str,
-    **kwargs,
 ) -> ModifySpotFleetRequestRequestRequestTypeDef:
     r = ModifySpotFleetRequestRequestRequestTypeDef(
         SpotFleetRequestId=SpotFleetRequestId
     )
-    ExcessCapacityTerminationPolicy = kwargs.get(
-        "ExcessCapacityTerminationPolicy", config.excessCapacityTerminationPolicy
-    )
+    ExcessCapacityTerminationPolicy = config.excessCapacityTerminationPolicy
     if ExcessCapacityTerminationPolicy is not None:
         r["ExcessCapacityTerminationPolicy"] = ExcessCapacityTerminationPolicy
-    LaunchTemplateConfigs = (
-        [
-            unpack_launch_template_config(c, **overrides)
-            for c, overrides in zip(
-                config.launchTemplateConfigs,
-                kwargs.get("LaunchTemplateConfigs", repeat({})),
-            )
-        ]
-        if config.launchTemplateConfigs
-        else kwargs.get("LaunchTemplateConfigs")
-    )
+    LaunchTemplateConfigs = [
+        unpack_launch_template_config(c) for c in config.launchTemplateConfigs
+    ]
     if LaunchTemplateConfigs is not None:
         r["LaunchTemplateConfigs"] = LaunchTemplateConfigs
-    OnDemandTargetCapacity = kwargs.get(
-        "OnDemandTargetCapacity", config.onDemandTargetCapacity
-    )
+    OnDemandTargetCapacity = config.onDemandTargetCapacity
     if OnDemandTargetCapacity is not None:
         r["OnDemandTargetCapacity"] = OnDemandTargetCapacity
-    TargetCapacity = kwargs.get("TargetCapacity", config.targetCapacity)
+    TargetCapacity = config.targetCapacity
     if TargetCapacity is not None:
         r["TargetCapacity"] = TargetCapacity
     return r

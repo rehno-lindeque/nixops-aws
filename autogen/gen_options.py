@@ -105,30 +105,31 @@ def render_type(
         return str(t)
 
 
-def gen_options_type_fields(r: Resource, t: Type, namespace: dict = type_defs.__dict__):
+def gen_options_type_fields(
+    r: Resource,
+    t: Type,
+    namespace: dict = type_defs.__dict__,
+    class_name: Optional[str] = None,
+):
+    if class_name is None:
+        class_name = re.sub("(Request)*TypeDef$", "", t.__name__)
+
+    def is_reference(field_name):
+        return (class_name, uncapitalize(field_name)) in r.cross_references or (
+            None,
+            uncapitalize(field_name),
+        ) in r.cross_references
+
     required_keys = {uncapitalize(k) for k in t.__required_keys__}
     optional_keys = {uncapitalize(k) for k in t.__optional_keys__}
 
     fields_types = {uncapitalize(k): t for k, t in t.__annotations__.items()}
     fields_rendered = {k: render_type(t, k) for k, t in fields_types.items()}
 
-    return "\n".join(
-        [
-            *[f"{k}: {fields_rendered[k]}" for k in sorted(list(required_keys))],
-            *[
-                f"{k}: Optional[{fields_rendered[k]}]"
-                for k in sorted(list(optional_keys))
-            ],
-        ]
-    )
-
-
-def gen_options_type_fields(r: Resource, t: Type, namespace: dict = type_defs.__dict__):
-    required_keys = {uncapitalize(k) for k in t.__required_keys__}
-    optional_keys = {uncapitalize(k) for k in t.__optional_keys__}
-
-    fields_types = {uncapitalize(k): t for k, t in t.__annotations__.items()}
-    fields_rendered = {k: render_type(t, k) for k, t in fields_types.items()}
+    # Add ResourceReferenceOption[str, ...] to types
+    for k, rendered in fields_rendered.items():
+        if is_reference(k):
+            fields_rendered[k] = f"ResourceReferenceOption[str, {rendered}]"
 
     return "\n".join(
         [
@@ -185,11 +186,29 @@ def gen_options_unpack(
     class_name: Optional[str] = None,
     unpack_name: Optional[str] = None,
     namespace: dict = type_defs.__dict__,
+    with_kwargs: bool = False,
 ) -> str:
     if class_name is None:
         class_name = re.sub("(Request)*TypeDef$", "", dest_type.__name__)
 
-    def render_unpack_simple(t: Type, field_name: str, kwfields_name: str = "kwargs"):
+    def is_reference(field_name):
+        return (class_name, uncapitalize(field_name)) in r.cross_references or (
+            None,
+            uncapitalize(field_name),
+        ) in r.cross_references
+
+    def render_config_field(t: Type, field_name: str, required: bool = False):
+        if is_reference(field_name):
+            if required == False:
+                return f"""config.{uncapitalize(field_name)}.value if config.{uncapitalize(field_name)} else None"""
+            else:
+                return f"""config.{uncapitalize(field_name)}.value"""
+        else:
+            return f"""config.{uncapitalize(field_name)}"""
+
+    def render_unpack_simple(
+        t: Type, field_name: str, kwfields_name: str = "kwargs", required: bool = False
+    ):
         origin = get_origin(t)
         # arg_types = list(set(get_args(t)) - {type(None)})
         if origin in {list, Sequence, collections.Sequence}:
@@ -197,17 +216,26 @@ def gen_options_unpack(
         # elif origin is Union and type(None) in get_args(t):
         #     return f"if config.{uncapitalize(field_name)}: {render_unpack_simple(arg_type, field_name)}"
         else:
-            return f"""config.{uncapitalize(field_name)}"""
+            return render_config_field(t, field_name, required=required)
 
-    def render_unpack_typedef(t: Type, rendered_field_name: str, overrides: str):
+    def render_unpack_typedef(
+        t: Type, rendered_field_name: str, overrides: Optional[str] = None
+    ):
         class_name = re.sub(
             "(Request)*TypeDef$", "", t._evaluate(namespace, {}, set()).__name__
         )
         class_camel_case = re.sub("([A-Z])", "_\\1", class_name)[1:].lower()
-        return f"unpack_{class_camel_case}({rendered_field_name}, **{overrides})"
+        if with_kwargs:
+            assert overrides is not None
+            return f"unpack_{class_camel_case}({rendered_field_name}, **{overrides})"
+        else:
+            return f"unpack_{class_camel_case}({rendered_field_name})"
 
     def render_unpack_sequence_typedef(t: Type, field_name: str):
-        return f"[{render_unpack_typedef(t, 'c', 'overrides')} for c, overrides in zip(config.{uncapitalize(field_name)}, kwargs.get('{field_name}', repeat({{}})))]"
+        if with_kwargs:
+            return f"[{render_unpack_typedef(t, 'c', 'overrides')} for c, overrides in zip(config.{uncapitalize(field_name)}, kwargs.get('{field_name}', repeat({{}})))]"
+        else:
+            return f"[{render_unpack_typedef(t, 'c')} for c in config.{uncapitalize(field_name)}]"
 
     def render_unpack_wrapped_typedef(t: Type, field_name: str):
         origin = get_origin(t)
@@ -221,7 +249,7 @@ def gen_options_unpack(
         elif origin in {list, Sequence, collections.Sequence}:
             return render_unpack_sequence_typedef(arg_types[0], field_name)
 
-    def render_unpack_assignment(t: Type, field_name: str):
+    def render_unpack_assignment(t: Type, field_name: str, required: bool = False):
         origin = get_origin(t)
         arg_types = get_args(t)
         is_forwardref = isinstance(t, ForwardRef) or (
@@ -233,17 +261,26 @@ def gen_options_unpack(
             }
             and isinstance(arg_types[0], ForwardRef)
         )
-        if is_forwardref:
-            return f"""{field_name} = {render_unpack_wrapped_typedef(t, field_name)} if config.{uncapitalize(field_name)} else kwargs.get('{field_name}')"""
+
+        if with_kwargs:
+            if is_forwardref:
+                return f"""{field_name} = {render_unpack_wrapped_typedef(t, field_name)} if config.{uncapitalize(field_name)} else kwargs.get('{field_name}')"""
+            else:
+                return f"""{field_name} = kwargs.get('{field_name}', {render_unpack_simple(t, field_name, required=required)})"""
         else:
-            return f"""{field_name} = kwargs.get('{field_name}', {render_unpack_simple(t, field_name)})"""
+            if is_forwardref:
+                return (
+                    f"""{field_name} = {render_unpack_wrapped_typedef(t, field_name)}"""
+                )
+            else:
+                return f"""{field_name} = {render_unpack_simple(t, field_name, required=required)}"""
 
     def render_dict_assignment(t: Type, field_name: str):
         return f"""if {field_name} is not None: r['{field_name}'] = {field_name}"""
 
     def render_unpack_argument(t: Type, field_name: str):
         # return f"""{field_name} = kwargs.get('{field_name}', {render_unpack_simple(t, field_name)})"""
-        return render_unpack_assignment(t, field_name)
+        return render_unpack_assignment(t, field_name, required=True)
 
     class_camel_case = re.sub("([A-Z])", "_\\1", class_name)[1:].lower()
     unpack_name = unpack_name or class_camel_case
@@ -262,7 +299,7 @@ def gen_options_unpack(
 def unpack_{unpack_name}(
     config: {class_name}Options,
     {"".join([s + ', ' for s in extra_arg_types_rendered])}
-    **kwargs,
+    {"**kwargs," if with_kwargs else ""}
 ) -> {dest_type.__name__}:
 """.strip(),
             f"""    r = {dest_type.__name__}("""

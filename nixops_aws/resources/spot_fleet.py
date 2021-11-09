@@ -580,88 +580,36 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             self._destroy()
 
         self.log("creating spot fleet request")
-        # resolved_args = self.resolve_state_references()
-        # resolved_args = defn.resolve_config()
-        print("references", defn.get_references())
-        print("resolved", self.resolve_config(defn))
-        return
-        # response = self._request_spot_fleet(**resolved_args)
+        response = self._request_spot_fleet()
 
-        # # return {
-        # #     "IamFleetRole": self.resolve_resource.arn
-        # #     if defn.config.iamFleetRole
-        # #     else None,
-        # #     "LaunchTemplateConfigs": [
-        # #         {
-        # #             "LaunchTemplateSpecification": {
-        # #                 "LaunchTemplateId"
-        # #             }
-        # #             "Overrides": [
-        # #                 {
-        # #                     "SubnetId":
-        # #                 }
-        # #             ]
-        # #             if c.overrides
-        # #             else None,
-        # #         }
-        # #         for c in defn.config.launchTemplateConfigs
-        # #     ]
-        # #     if defn.config.launchTemplateConfigs
-        # #     else None,
-        # #     "LaunchSpecifications": [
-        # #         {
-        # #             "NetworkInterfaces": [
-        # #                 {
-        # #                     "NetworkInterfaceId":
-        # #                     "SubnetId":
-        # #                 }
-        # #                 for c in c.networkInterfaces
-        # #             ]
-        # #             if c.networkInterfaces
-        # #             else None,
-        # #             "SecurityGroups": [
-        # #                 {
-        # #                     "GroupId":
-        # #                 }
-        # #                 for c in c.securityGroups
-        # #             ]
-        # #             if c.securityGroups
-        # #             else None,
-        # #         }
-        # #         for c in defn.config.launchSpecifications
-        # #     ]
-        # #     if defn.config.launchSpecifications
-        # #     else None,
-        # # }
+        with self.depl._db:
+            self._state["spotFleetRequestId"] = response["SpotFleetRequestId"]
 
-        # with self.depl._db:
-        #     self._state["spotFleetRequestId"] = response["SpotFleetRequestId"]
-
-        #     # # Unmodifiable keys
-        #     # self._state["allocationStrategy"] = defn.config.allocationStrategy
-        #     # self._state["fulfilledCapacity"] = defn.config.fulfilledCapacity
-        #     # self._state["iamFleetRole"] = defn.config.iamFleetRole
-        #     # self._state["instanceInterruptionBehavior"] = defn.config.instanceInterruptionBehavior
-        #     # self._state["instancePoolsToUseCount"] = defn.config.instancePoolsToUseCount
-        #     # self._state["launchSpecifications"] = defn.config.launchSpecifications
-        #     # self._state["loadBalancersConfig"] = defn.config.loadBalancersConfig
-        #     # self._state["onDemandAllocationStrategy"] = defn.config.onDemandAllocationStrategy
-        #     # self._state["onDemandFulfilledCapacity"] = defn.config.onDemandFulfilledCapacity
-        #     # self._state["onDemandMaxTotalPrice"] = defn.config.onDemandMaxTotalPrice
-        #     # self._state["region"] = defn.config.region
-        #     # self._state["replaceUnhealthyInstances"] = defn.config.replaceUnhealthyInstances
-        #     # self._state["spotMaintenanceStrategies"] = defn.config.spotMaintenanceStrategies
-        #     # self._state["spotMaxTotalPrice"] = defn.config.spotMaxTotalPrice
-        #     # self._state["spotPrice"] = defn.config.spotPrice
-        #     # self._state["terminateInstancesWithExpiration"] = defn.config.terminateInstancesWithExpiration
-        #     # self._state["type"] = defn.config.type
-        #     # self._state["validFrom"] = defn.config.validFrom
-        #     # self._state["validUntil"] = defn.config.validUntil
-        #     # # Modifiable keys
-        #     # self._state["excessCapacityTerminationPolicy"] = defn.config.excessCapacityTerminationPolicy
-        #     # self._state["launchTemplateConfigs"] = defn.config.launchTemplateConfigs
-        #     # self._state["onDemandTargetCapacity"] = defn.config.onDemandTargetCapacity
-        #     # self._state["targetCapacity"] = defn.config.targetCapacity
+            # Unmodifiable keys
+            self._state["allocationStrategy"] = defn.config.allocationStrategy
+            self._state["fulfilledCapacity"] = defn.config.fulfilledCapacity
+            self._state["iamFleetRole"] = defn.config.iamFleetRole
+            self._state["instanceInterruptionBehavior"] = defn.config.instanceInterruptionBehavior
+            self._state["instancePoolsToUseCount"] = defn.config.instancePoolsToUseCount
+            self._state["launchSpecifications"] = defn.config.launchSpecifications
+            self._state["loadBalancersConfig"] = defn.config.loadBalancersConfig
+            self._state["onDemandAllocationStrategy"] = defn.config.onDemandAllocationStrategy
+            self._state["onDemandFulfilledCapacity"] = defn.config.onDemandFulfilledCapacity
+            self._state["onDemandMaxTotalPrice"] = defn.config.onDemandMaxTotalPrice
+            self._state["region"] = defn.config.region
+            self._state["replaceUnhealthyInstances"] = defn.config.replaceUnhealthyInstances
+            self._state["spotMaintenanceStrategies"] = defn.config.spotMaintenanceStrategies
+            self._state["spotMaxTotalPrice"] = defn.config.spotMaxTotalPrice
+            self._state["spotPrice"] = defn.config.spotPrice
+            self._state["terminateInstancesWithExpiration"] = defn.config.terminateInstancesWithExpiration
+            self._state["type"] = defn.config.type
+            self._state["validFrom"] = defn.config.validFrom
+            self._state["validUntil"] = defn.config.validUntil
+            # Modifiable keys
+            self._state["excessCapacityTerminationPolicy"] = defn.config.excessCapacityTerminationPolicy
+            self._state["launchTemplateConfigs"] = defn.config.launchTemplateConfigs
+            self._state["onDemandTargetCapacity"] = defn.config.onDemandTargetCapacity
+            self._state["targetCapacity"] = defn.config.targetCapacity
 
         # def tag_updater(tags):
         #     self.get_client("ec2").create_tags(
@@ -671,7 +619,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
 
         # self.update_tags_using(tag_updater, user_tags=defn.config.tags, check=True)
 
-        # self.wait_for_spot_fleet_request_available()
+        self.wait_for_spot_fleet_request_available()
 
     def realize_modify_spot_fleet(self, allow_recreate):
         self.log(
@@ -866,7 +814,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         defn: AwsSpotFleetDefinition = self.get_defn()
         response = self.get_client("ec2", region=defn.config.region).request_spot_fleet(
             SpotFleetRequestConfig=unpack_create_spot_fleet_request(
-                self.get_defn().config,
+                config = self.resolve_config(defn),
                 **kwargs,
             ),
         )
