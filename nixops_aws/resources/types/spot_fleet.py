@@ -405,19 +405,31 @@ def unpack_instance_network_interface_specification(
     Ipv4PrefixCount = config.ipv4PrefixCount
     if Ipv4PrefixCount is not None:
         r["Ipv4PrefixCount"] = Ipv4PrefixCount
-    Ipv4Prefixes = [unpack_ipv4_prefix_specification(c) for c in config.ipv4Prefixes]
+    Ipv4Prefixes = (
+        [unpack_ipv4_prefix_specification(c) for c in config.ipv4Prefixes]
+        if config.ipv4Prefixes
+        else None
+    )
     if Ipv4Prefixes is not None:
         r["Ipv4Prefixes"] = Ipv4Prefixes
     Ipv6AddressCount = config.ipv6AddressCount
     if Ipv6AddressCount is not None:
         r["Ipv6AddressCount"] = Ipv6AddressCount
-    Ipv6Addresses = [unpack_instance_ipv6_address(c) for c in config.ipv6Addresses]
+    Ipv6Addresses = (
+        [unpack_instance_ipv6_address(c) for c in config.ipv6Addresses]
+        if config.ipv6Addresses
+        else None
+    )
     if Ipv6Addresses is not None:
         r["Ipv6Addresses"] = Ipv6Addresses
     Ipv6PrefixCount = config.ipv6PrefixCount
     if Ipv6PrefixCount is not None:
         r["Ipv6PrefixCount"] = Ipv6PrefixCount
-    Ipv6Prefixes = [unpack_ipv6_prefix_specification(c) for c in config.ipv6Prefixes]
+    Ipv6Prefixes = (
+        [unpack_ipv6_prefix_specification(c) for c in config.ipv6Prefixes]
+        if config.ipv6Prefixes
+        else None
+    )
     if Ipv6Prefixes is not None:
         r["Ipv6Prefixes"] = Ipv6Prefixes
     NetworkCardIndex = config.networkCardIndex
@@ -431,9 +443,11 @@ def unpack_instance_network_interface_specification(
     PrivateIpAddress = config.privateIpAddress
     if PrivateIpAddress is not None:
         r["PrivateIpAddress"] = PrivateIpAddress
-    PrivateIpAddresses = [
-        unpack_private_ip_address_specification(c) for c in config.privateIpAddresses
-    ]
+    PrivateIpAddresses = (
+        [unpack_private_ip_address_specification(c) for c in config.privateIpAddresses]
+        if config.privateIpAddresses
+        else None
+    )
     if PrivateIpAddresses is not None:
         r["PrivateIpAddresses"] = PrivateIpAddresses
     SecondaryPrivateIpAddressCount = config.secondaryPrivateIpAddressCount
@@ -513,16 +527,20 @@ def unpack_spot_fleet_launch_specification(
     AddressingType = config.addressingType
     if AddressingType is not None:
         r["AddressingType"] = AddressingType
-    BlockDeviceMappings = [
-        unpack_block_device_mapping(c) for c in config.blockDeviceMappings
-    ]
+    BlockDeviceMappings = (
+        [unpack_block_device_mapping(c) for c in config.blockDeviceMappings]
+        if config.blockDeviceMappings
+        else None
+    )
     if BlockDeviceMappings is not None:
         r["BlockDeviceMappings"] = BlockDeviceMappings
     EbsOptimized = config.ebsOptimized
     if EbsOptimized is not None:
         r["EbsOptimized"] = EbsOptimized
-    IamInstanceProfile = unpack_iam_instance_profile_specification(
-        config.iamInstanceProfile
+    IamInstanceProfile = (
+        unpack_iam_instance_profile_specification(config.iamInstanceProfile)
+        if config.iamInstanceProfile
+        else None
     )
     if IamInstanceProfile is not None:
         r["IamInstanceProfile"] = IamInstanceProfile
@@ -538,22 +556,32 @@ def unpack_spot_fleet_launch_specification(
     KeyName = config.keyName
     if KeyName is not None:
         r["KeyName"] = KeyName
-    Monitoring = unpack_spot_fleet_monitoring(config.monitoring)
+    Monitoring = (
+        unpack_spot_fleet_monitoring(config.monitoring) if config.monitoring else None
+    )
     if Monitoring is not None:
         r["Monitoring"] = Monitoring
-    NetworkInterfaces = [
-        unpack_instance_network_interface_specification(c)
-        for c in config.networkInterfaces
-    ]
+    NetworkInterfaces = (
+        [
+            unpack_instance_network_interface_specification(c)
+            for c in config.networkInterfaces
+        ]
+        if config.networkInterfaces
+        else None
+    )
     if NetworkInterfaces is not None:
         r["NetworkInterfaces"] = NetworkInterfaces
-    Placement = unpack_spot_placement(config.placement)
+    Placement = unpack_spot_placement(config.placement) if config.placement else None
     if Placement is not None:
         r["Placement"] = Placement
     RamdiskId = config.ramdiskId
     if RamdiskId is not None:
         r["RamdiskId"] = RamdiskId
-    SecurityGroups = [unpack_group_identifier(c) for c in config.securityGroups]
+    SecurityGroups = (
+        [unpack_group_identifier(c) for c in config.securityGroups]
+        if config.securityGroups
+        else None
+    )
     if SecurityGroups is not None:
         r["SecurityGroups"] = SecurityGroups
     SpotPrice = config.spotPrice
@@ -638,12 +666,18 @@ def unpack_launch_template_config(
     config: LaunchTemplateConfigOptions,
 ) -> LaunchTemplateConfigTypeDef:
     r = LaunchTemplateConfigTypeDef()
-    LaunchTemplateSpecification = unpack_fleet_launch_template_specification(
-        config.launchTemplateSpecification
+    LaunchTemplateSpecification = (
+        unpack_fleet_launch_template_specification(config.launchTemplateSpecification)
+        if config.launchTemplateSpecification
+        else None
     )
     if LaunchTemplateSpecification is not None:
         r["LaunchTemplateSpecification"] = LaunchTemplateSpecification
-    Overrides = [unpack_launch_template_overrides(c) for c in config.overrides]
+    Overrides = (
+        [unpack_launch_template_overrides(c) for c in config.overrides]
+        if config.overrides
+        else None
+    )
     if Overrides is not None:
         r["Overrides"] = Overrides
     return r
@@ -671,9 +705,11 @@ def unpack_classic_load_balancers_config(
     config: ClassicLoadBalancersConfigOptions,
 ) -> ClassicLoadBalancersConfigTypeDef:
     r = ClassicLoadBalancersConfigTypeDef()
-    ClassicLoadBalancers = [
-        unpack_classic_load_balancer(c) for c in config.classicLoadBalancers
-    ]
+    ClassicLoadBalancers = (
+        [unpack_classic_load_balancer(c) for c in config.classicLoadBalancers]
+        if config.classicLoadBalancers
+        else None
+    )
     if ClassicLoadBalancers is not None:
         r["ClassicLoadBalancers"] = ClassicLoadBalancers
     return r
@@ -701,7 +737,11 @@ def unpack_target_groups_config(
     config: TargetGroupsConfigOptions,
 ) -> TargetGroupsConfigTypeDef:
     r = TargetGroupsConfigTypeDef()
-    TargetGroups = [unpack_target_group(c) for c in config.targetGroups]
+    TargetGroups = (
+        [unpack_target_group(c) for c in config.targetGroups]
+        if config.targetGroups
+        else None
+    )
     if TargetGroups is not None:
         r["TargetGroups"] = TargetGroups
     return r
@@ -716,12 +756,18 @@ def unpack_load_balancers_config(
     config: LoadBalancersConfigOptions,
 ) -> LoadBalancersConfigTypeDef:
     r = LoadBalancersConfigTypeDef()
-    ClassicLoadBalancersConfig = unpack_classic_load_balancers_config(
-        config.classicLoadBalancersConfig
+    ClassicLoadBalancersConfig = (
+        unpack_classic_load_balancers_config(config.classicLoadBalancersConfig)
+        if config.classicLoadBalancersConfig
+        else None
     )
     if ClassicLoadBalancersConfig is not None:
         r["ClassicLoadBalancersConfig"] = ClassicLoadBalancersConfig
-    TargetGroupsConfig = unpack_target_groups_config(config.targetGroupsConfig)
+    TargetGroupsConfig = (
+        unpack_target_groups_config(config.targetGroupsConfig)
+        if config.targetGroupsConfig
+        else None
+    )
     if TargetGroupsConfig is not None:
         r["TargetGroupsConfig"] = TargetGroupsConfig
     return r
@@ -749,7 +795,11 @@ def unpack_spot_maintenance_strategies(
     config: SpotMaintenanceStrategiesOptions,
 ) -> SpotMaintenanceStrategiesTypeDef:
     r = SpotMaintenanceStrategiesTypeDef()
-    CapacityRebalance = unpack_spot_capacity_rebalance(config.capacityRebalance)
+    CapacityRebalance = (
+        unpack_spot_capacity_rebalance(config.capacityRebalance)
+        if config.capacityRebalance
+        else None
+    )
     if CapacityRebalance is not None:
         r["CapacityRebalance"] = CapacityRebalance
     return r
@@ -826,17 +876,25 @@ def unpack_create_spot_fleet_request(
     InstancePoolsToUseCount = config.instancePoolsToUseCount
     if InstancePoolsToUseCount is not None:
         r["InstancePoolsToUseCount"] = InstancePoolsToUseCount
-    LaunchSpecifications = [
-        unpack_spot_fleet_launch_specification(c) for c in config.launchSpecifications
-    ]
+    LaunchSpecifications = (
+        [unpack_spot_fleet_launch_specification(c) for c in config.launchSpecifications]
+        if config.launchSpecifications
+        else None
+    )
     if LaunchSpecifications is not None:
         r["LaunchSpecifications"] = LaunchSpecifications
-    LaunchTemplateConfigs = [
-        unpack_launch_template_config(c) for c in config.launchTemplateConfigs
-    ]
+    LaunchTemplateConfigs = (
+        [unpack_launch_template_config(c) for c in config.launchTemplateConfigs]
+        if config.launchTemplateConfigs
+        else None
+    )
     if LaunchTemplateConfigs is not None:
         r["LaunchTemplateConfigs"] = LaunchTemplateConfigs
-    LoadBalancersConfig = unpack_load_balancers_config(config.loadBalancersConfig)
+    LoadBalancersConfig = (
+        unpack_load_balancers_config(config.loadBalancersConfig)
+        if config.loadBalancersConfig
+        else None
+    )
     if LoadBalancersConfig is not None:
         r["LoadBalancersConfig"] = LoadBalancersConfig
     OnDemandAllocationStrategy = config.onDemandAllocationStrategy
@@ -854,8 +912,10 @@ def unpack_create_spot_fleet_request(
     ReplaceUnhealthyInstances = config.replaceUnhealthyInstances
     if ReplaceUnhealthyInstances is not None:
         r["ReplaceUnhealthyInstances"] = ReplaceUnhealthyInstances
-    SpotMaintenanceStrategies = unpack_spot_maintenance_strategies(
-        config.spotMaintenanceStrategies
+    SpotMaintenanceStrategies = (
+        unpack_spot_maintenance_strategies(config.spotMaintenanceStrategies)
+        if config.spotMaintenanceStrategies
+        else None
     )
     if SpotMaintenanceStrategies is not None:
         r["SpotMaintenanceStrategies"] = SpotMaintenanceStrategies
@@ -897,9 +957,11 @@ def unpack_modify_spot_fleet_request(
     ExcessCapacityTerminationPolicy = config.excessCapacityTerminationPolicy
     if ExcessCapacityTerminationPolicy is not None:
         r["ExcessCapacityTerminationPolicy"] = ExcessCapacityTerminationPolicy
-    LaunchTemplateConfigs = [
-        unpack_launch_template_config(c) for c in config.launchTemplateConfigs
-    ]
+    LaunchTemplateConfigs = (
+        [unpack_launch_template_config(c) for c in config.launchTemplateConfigs]
+        if config.launchTemplateConfigs
+        else None
+    )
     if LaunchTemplateConfigs is not None:
         r["LaunchTemplateConfigs"] = LaunchTemplateConfigs
     OnDemandTargetCapacity = config.onDemandTargetCapacity

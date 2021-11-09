@@ -270,7 +270,7 @@ def gen_options_unpack(
         else:
             if is_forwardref:
                 return (
-                    f"""{field_name} = {render_unpack_wrapped_typedef(t, field_name)}"""
+                    f"""{field_name} = {render_unpack_wrapped_typedef(t, field_name)} if config.{uncapitalize(field_name)} else None"""
                 )
             else:
                 return f"""{field_name} = {render_unpack_simple(t, field_name, required=required)}"""
