@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import inspect
 from nixops.resources import ResourceEval, ResourceOptions
+from nixops.backends import MachineOptions
 from typing import (
     Annotated,
     Any,
@@ -145,7 +146,10 @@ def transform_options(
     def _transform_value(value, annotation):
         # Transform child ResourceEval
         if isinstance(value, ResourceEval):
-            if inspect.isclass(annotation) and issubclass(annotation, ResourceOptions):
+            if inspect.isclass(annotation) and (
+                issubclass(annotation, ResourceOptions)
+                or issubclass(annotation, MachineOptions)
+            ):
                 # print("resource options", value)
                 return transform_options(value, annotation, environment)
             else:
@@ -164,7 +168,9 @@ def transform_options(
             reference = value
             resolved = environment.get(value)
             if resolved is not None:
-                return ResourceReferenceOption.resolved(value=resolved, reference=reference)
+                return ResourceReferenceOption.resolved(
+                    value=resolved, reference=reference
+                )
             # Value was not a reference (TODO: improve resolved check - currently we just assume no resolution means its a value)
             return ResourceReferenceOption.resolved(value=value, reference=None)
 
@@ -191,14 +197,18 @@ def transform_options(
                 continue
             value = resource_eval.get(k)
             anno, anno_origin = _simplify(anno)
-            if inspect.isclass(anno_origin) and issubclass(anno_origin, Sequence):
+            if (
+                inspect.isclass(anno_origin)
+                and issubclass(anno_origin, Sequence)
+                and value is not None
+            ):
                 elem_anno, elem_origin = _simplify(typing.get_args(anno)[0])
                 yield (
                     k,
                     tuple(
                         _transform_value(elem_value, elem_origin or elem_anno)
                         for elem_value in value
-                    )
+                    ),
                 )
             # elif anno_origin is Mapping:
             #     elem_anno, elem_origin = _simplify(typing.get_args(anno))
@@ -218,7 +228,7 @@ def transform_options(
     # print("resource_eval", resource_eval)
     # print("transformed", dict(_transform_each()))
 
-    return dest_class(**dict(_transform_each()))
+    return dest_class(**dict(_transform_each()))  # type: ignore[call-arg]
 
     # constructor = (
     #     _dispatch_union(typing.get_args(dest_t))
