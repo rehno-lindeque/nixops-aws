@@ -27,4 +27,3 @@ class AwsResourceDefinition(ResourceDefinition, Generic[ConfigType]):
     def show_type(self) -> str:
         """A short description of the type of resource this is"""
         return self.get_type()
-

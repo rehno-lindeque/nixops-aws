@@ -22,7 +22,7 @@ from typing import (
     overload,
 )
 from typing_extensions import Concatenate, ParamSpec
-from ..util.references import ResourceReferenceOption
+from ..util.references import ResourceReferenceOption, Unresolved
 
 if TYPE_CHECKING:
     from mypy_boto3_ec2.type_defs import (
@@ -251,7 +251,7 @@ def unpack_block_device_mapping(
     DeviceName = config.deviceName
     if DeviceName is not None:
         r["DeviceName"] = DeviceName
-    Ebs = unpack_ebs_block_device(config.ebs)
+    Ebs = unpack_ebs_block_device(config.ebs) if config.ebs else None
     if Ebs is not None:
         r["Ebs"] = Ebs
     NoDevice = config.noDevice
@@ -439,7 +439,9 @@ def unpack_instance_network_interface_specification(
         config.networkInterfaceId.value if config.networkInterfaceId else None
     )
     if NetworkInterfaceId is not None:
-        r["NetworkInterfaceId"] = NetworkInterfaceId
+        # if isinstance(NetworkInterfaceId, Unresolved):
+        #     raise Exception("Unresolved state reference {}".format(NetworkInterfaceId))
+        r["NetworkInterfaceId"] = NetworkInterfaceId  # type: ignore[typeddict-item]
     PrivateIpAddress = config.privateIpAddress
     if PrivateIpAddress is not None:
         r["PrivateIpAddress"] = PrivateIpAddress
@@ -455,7 +457,9 @@ def unpack_instance_network_interface_specification(
         r["SecondaryPrivateIpAddressCount"] = SecondaryPrivateIpAddressCount
     SubnetId = config.subnetId.value if config.subnetId else None
     if SubnetId is not None:
-        r["SubnetId"] = SubnetId
+        # if isinstance(SubnetId, Unresolved):
+        #     raise Exception("Unresolved state reference {}".format(SubnetId))
+        r["SubnetId"] = SubnetId  # type: ignore[typeddict-item]
     return r
 
 
@@ -492,7 +496,9 @@ def unpack_group_identifier(
     r = GroupIdentifierTypeDef()
     GroupId = config.groupId.value if config.groupId else None
     if GroupId is not None:
-        r["GroupId"] = GroupId
+        # if isinstance(GroupId, Unresolved):
+        #     raise Exception("Unresolved state reference {}".format(GroupId))
+        r["GroupId"] = GroupId  # type: ignore[typeddict-item]
     GroupName = config.groupName
     if GroupName is not None:
         r["GroupName"] = GroupName
@@ -549,7 +555,7 @@ def unpack_spot_fleet_launch_specification(
         r["ImageId"] = ImageId
     InstanceType = config.instanceType
     if InstanceType is not None:
-        r["InstanceType"] = InstanceType
+        r["InstanceType"] = InstanceType  # type: ignore[typeddict-item]
     KernelId = config.kernelId
     if KernelId is not None:
         r["KernelId"] = KernelId
@@ -589,7 +595,9 @@ def unpack_spot_fleet_launch_specification(
         r["SpotPrice"] = SpotPrice
     SubnetId = config.subnetId.value if config.subnetId else None
     if SubnetId is not None:
-        r["SubnetId"] = SubnetId
+        # if isinstance(SubnetId, Unresolved):
+        #     raise Exception("Unresolved state reference {}".format(SubnetId))
+        r["SubnetId"] = SubnetId  # type: ignore[typeddict-item]
     UserData = config.userData
     if UserData is not None:
         r["UserData"] = UserData
@@ -613,7 +621,9 @@ def unpack_fleet_launch_template_specification(
         config.launchTemplateId.value if config.launchTemplateId else None
     )
     if LaunchTemplateId is not None:
-        r["LaunchTemplateId"] = LaunchTemplateId
+        # if isinstance(LaunchTemplateId, Unresolved):
+        #     raise Exception("Unresolved state reference {}".format(LaunchTemplateId))
+        r["LaunchTemplateId"] = LaunchTemplateId  # type: ignore[typeddict-item]
     LaunchTemplateName = config.launchTemplateName
     if LaunchTemplateName is not None:
         r["LaunchTemplateName"] = LaunchTemplateName
@@ -641,7 +651,7 @@ def unpack_launch_template_overrides(
         r["AvailabilityZone"] = AvailabilityZone
     InstanceType = config.instanceType
     if InstanceType is not None:
-        r["InstanceType"] = InstanceType
+        r["InstanceType"] = InstanceType  # type: ignore[typeddict-item]
     Priority = config.priority
     if Priority is not None:
         r["Priority"] = Priority
@@ -650,7 +660,9 @@ def unpack_launch_template_overrides(
         r["SpotPrice"] = SpotPrice
     SubnetId = config.subnetId.value if config.subnetId else None
     if SubnetId is not None:
-        r["SubnetId"] = SubnetId
+        # if isinstance(SubnetId, Unresolved):
+        #     raise Exception("Unresolved state reference {}".format(SubnetId))
+        r["SubnetId"] = SubnetId  # type: ignore[typeddict-item]
     WeightedCapacity = config.weightedCapacity
     if WeightedCapacity is not None:
         r["WeightedCapacity"] = WeightedCapacity
@@ -858,8 +870,11 @@ class AwsSpotFleetOptions(ResourceOptions):
 def unpack_create_spot_fleet_request(
     config: AwsSpotFleetOptions,
 ) -> SpotFleetRequestConfigDataTypeDef:
+    # if isinstance(config.iamFleetRole.value, Unresolved):
+    #     raise Exception("Unresolved state reference {}".format(config.iamFleetRole.value))
     r = SpotFleetRequestConfigDataTypeDef(
-        IamFleetRole=config.iamFleetRole.value, TargetCapacity=config.targetCapacity
+        IamFleetRole=config.iamFleetRole.value,  # type: ignore[typeddict-item]
+        TargetCapacity=config.targetCapacity
     )
     AllocationStrategy = config.allocationStrategy
     if AllocationStrategy is not None:

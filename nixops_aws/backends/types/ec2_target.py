@@ -2,7 +2,7 @@ from nixops.backends import MachineOptions
 from nixops.resources import ResourceOptions
 # from typing import Union
 from typing import Optional
-from ..util.references import ResourceReferenceOption
+from ...resources.util.references import ResourceReferenceOption # TODO move util module up
 
 
 # class Ec2TargetInstanceOptions(ResourceOptions):

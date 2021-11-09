@@ -502,7 +502,6 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             self.state = self.UNKNOWN
         while self.state != self.UP:
             response = self._describe_spot_fleet_requests()
-            print("!!!!!!!!!!RESPONSE", "describe", response)
             for config in response["SpotFleetRequestConfigs"]:
                 check_response_field(
                     "SpotFleetRequestId",
@@ -515,9 +514,10 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
                             config["ActivityStatus"]
                         )
                     )
-                self.state = self.resource_state_from_boto(
-                    config["SpotFleetRequestState"]
-                )
+                with self.depl._db:
+                    self.state = self.resource_state_from_boto(
+                        config["SpotFleetRequestState"]
+                    )
             if self.state not in {self.UP, self.STARTING}:
                 raise Exception(
                     "spot fleet request {0} is in an unexpected state {1}".format(
@@ -537,8 +537,10 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             time.sleep(1)
         self.log_end("done")
 
-        with self.depl._db:
-            self.state = self.UP
+        # # Save additional data from last response if necessary
+        # with self.depl._db:
+        #     TODO
+
 
     def ensure_spot_fleet_up(self, check):
         defn: AwsSpotFleetDefinition = self.get_defn()

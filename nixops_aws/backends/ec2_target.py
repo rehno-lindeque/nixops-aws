@@ -6,7 +6,7 @@
 # import boto.ec2
 # import boto.ec2.blockdevicemapping
 # import boto.ec2.networkinterface
-from nixops.backends import MachineDefinition, MachineState
+from nixops.backends import MachineDefinition, MachineState, MachineOptions
 
 from nixops.nix_expr import Function, Call, RawValue
 # import nixops_aws.resources.ec2_common
@@ -20,12 +20,17 @@ from nixops.nix_expr import Function, Call, RawValue
 # import nixops.known_hosts
 # import datetime
 # from typing import Dict, Tuple, Any, Union, List
+from typing import Type, Generic, TypeVar
 
 # from nixops_aws.resources.ec2_common
 
+from .definition import AwsMachineDefinition
+from .state import AwsMachineState
 from .types.ec2_target import Ec2TargetMachineOptions
-from ..util.references import ResourceReferenceOption  # TODO: move util one directory up
+from ..resources.util.references import ResourceReferenceOption
 
+
+ConfigType = TypeVar("ConfigType", bound=MachineOptions)
 
 # name conventions:
 # device - device name that user enters: sd, xvd or nvme
@@ -34,10 +39,11 @@ from ..util.references import ResourceReferenceOption  # TODO: move util one dir
 # device_that_boto_expects - only sd device names can be passed to boto, but amazon will attach them as xvd or nvme based on machine type
 
 
-class EC2TargetDefinition(MachineDefinition):
+class EC2TargetDefinition(AwsMachineDefinition[Ec2TargetMachineOptions]):
     """Definition of an EC2 machine."""
 
     config: Ec2TargetMachineOptions
+    config_type: Type = Ec2TargetMachineOptions
 
     @classmethod
     def get_type(cls):
@@ -101,7 +107,7 @@ class EC2TargetDefinition(MachineDefinition):
         # )
 
 
-class EC2TargetState(MachineState[EC2TargetDefinition]):
+class EC2TargetState(AwsMachineState[EC2TargetDefinition]):
     """State of an EC2 machine."""
 
     definition_type = EC2TargetDefinition
