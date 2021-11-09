@@ -29,7 +29,7 @@ class AwsResourceState(DiffEngineResourceState, Generic[ConfigType]):
     def resolve_config(self, defn: AwsResourceDefinition):
         # print("resolve_config", defn.resource_eval, defn.config_type)
         env = dict(self.resolve_references(defn))
-        print("resolve_config env", env)
+        # print("resolve_config env", env)
         return transform_options(defn.resource_eval, defn.config_type, env)
 
     # def resolve_resource(
@@ -51,7 +51,7 @@ class AwsResourceState(DiffEngineResourceState, Generic[ConfigType]):
             resource = AwsResourceState.resolve_resource(self.depl, ref.value)
             if resource is not None:
                 state_path = ref.value[4:].split(".")[2:]
-                print("state_path", state_path)
+                # print("state_path", state_path)
                 if isinstance(resource, AwsResourceState):
                     yield (ref.value, resource._state.get(state_path[0]))
                 elif isinstance(resource, DiffEngineResourceState):

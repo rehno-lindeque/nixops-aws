@@ -40,9 +40,11 @@ class ResourceReferenceOption(
 
     @classmethod
     def resolved(cls, value: ValueType, reference: Optional[ReferenceType]):
-        return super(ResourceReferenceOption, cls.__new__(cls)).__init__(
+        obj = cls.__new__(cls)
+        super(ResourceReferenceOption, obj).__init__(
             value=value, reference=reference
         )
+        return obj
 
 
 def is_reference_type(t: Type) -> bool:

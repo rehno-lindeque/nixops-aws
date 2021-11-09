@@ -155,7 +155,8 @@ def transform_options(
         if inspect.isclass(annotation) and issubclass(
             annotation, ResourceReferenceOption
         ):
-            # print("reference option", value)
+            # if environment is not None:
+            #     print("reference option", value, environment.get(value))
             # Return unresolved if no environment is supplied
             if environment is None:
                 return ResourceReferenceOption(value)
@@ -163,9 +164,9 @@ def transform_options(
             reference = value
             resolved = environment.get(value)
             if resolved is not None:
-                return ResourceReferenceOption.resolved(resolved, reference)
+                return ResourceReferenceOption.resolved(value=resolved, reference=reference)
             # Value was not a reference (TODO: improve resolved check - currently we just assume no resolution means its a value)
-            return ResourceReferenceOption.resolved(value, None)
+            return ResourceReferenceOption.resolved(value=value, reference=None)
 
         # Pass through simple types
         return value
@@ -186,6 +187,8 @@ def transform_options(
 
     def _transform_each():
         for k, anno in annotations.items():
+            if k == "_frozen":
+                continue
             value = resource_eval.get(k)
             anno, anno_origin = _simplify(anno)
             if inspect.isclass(anno_origin) and issubclass(anno_origin, Sequence):
