@@ -4,12 +4,14 @@
 
 import boto3
 import botocore
-import time
+import inspect
+import json
 from nixops.diff import Handler
 import nixops.resources
 import nixops.util
 from nixops_aws.resources.ec2_common import EC2CommonState
 import nixops_aws.ec2_utils
+import time
 from typing import (
     Any,
     Dict,
@@ -22,7 +24,6 @@ from typing import (
     TypedDict,
     TypeVar,
 )
-import inspect
 from . import ec2_common
 from .aws_ec2_launch_template import Ec2LaunchTemplateState
 from .definition import AwsResourceDefinition
@@ -582,16 +583,20 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         self.log("creating spot fleet request")
         response = self._request_spot_fleet()
 
+        # Save essential state
         with self.depl._db:
+            self.state = self.UNKNOWN
             self._state["spotFleetRequestId"] = response["SpotFleetRequestId"]
 
+        # Save non-essential state
+        with self.depl._db:
             # Unmodifiable keys
             self._state["allocationStrategy"] = defn.config.allocationStrategy
             self._state["fulfilledCapacity"] = defn.config.fulfilledCapacity
-            self._state["iamFleetRole"] = defn.config.iamFleetRole
+            self._state["iamFleetRole"] = json.dumps(defn.config.iamFleetRole, cls=nixops.util.NixopsEncoder)
             self._state["instanceInterruptionBehavior"] = defn.config.instanceInterruptionBehavior
             self._state["instancePoolsToUseCount"] = defn.config.instancePoolsToUseCount
-            self._state["launchSpecifications"] = defn.config.launchSpecifications
+            self._state["launchSpecifications"] = json.dumps(defn.config.launchSpecifications, cls=nixops.util.NixopsEncoder)
             self._state["loadBalancersConfig"] = defn.config.loadBalancersConfig
             self._state["onDemandAllocationStrategy"] = defn.config.onDemandAllocationStrategy
             self._state["onDemandFulfilledCapacity"] = defn.config.onDemandFulfilledCapacity
@@ -603,21 +608,21 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             self._state["spotPrice"] = defn.config.spotPrice
             self._state["terminateInstancesWithExpiration"] = defn.config.terminateInstancesWithExpiration
             self._state["type"] = defn.config.type
-            self._state["validFrom"] = defn.config.validFrom
-            self._state["validUntil"] = defn.config.validUntil
+            # self._state["validFrom"] = defn.config.validFrom
+            # self._state["validUntil"] = defn.config.validUntil
             # Modifiable keys
             self._state["excessCapacityTerminationPolicy"] = defn.config.excessCapacityTerminationPolicy
-            self._state["launchTemplateConfigs"] = defn.config.launchTemplateConfigs
+            self._state["launchTemplateConfigs"] = json.dumps(defn.config.launchTemplateConfigs, cls=nixops.util.NixopsEncoder)
             self._state["onDemandTargetCapacity"] = defn.config.onDemandTargetCapacity
             self._state["targetCapacity"] = defn.config.targetCapacity
 
-        # def tag_updater(tags):
-        #     self.get_client("ec2").create_tags(
-        #         Resources=[self._state["spotFleetRequestId"]],
-        #         Tags=[{"Key": k, "Value": tags[k]} for k in tags],
-        #     )
+        def tag_updater(tags):
+            self.get_client("ec2").create_tags(
+                Resources=[self._state["spotFleetRequestId"]],
+                Tags=[{"Key": k, "Value": tags[k]} for k in tags],
+            )
 
-        # self.update_tags_using(tag_updater, user_tags=defn.config.tags, check=True)
+        self.update_tags_using(tag_updater, user_tags=defn.config.tags, check=True)
 
         self.wait_for_spot_fleet_request_available()
 
