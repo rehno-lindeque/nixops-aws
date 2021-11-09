@@ -1,6 +1,9 @@
 __all__ = (
+    "definition",
+    "state",
+    # ...
     "aws_ec2_launch_template",
-    "aws_spot_fleet_request",
+    "spot_fleet",
     "aws_vpn_connection",
     "aws_vpn_connection_route",
     "aws_vpn_gateway",
@@ -9,7 +12,7 @@ __all__ = (
     "cloudwatch_metric_alarm",
     "ebs_volume",
     "ec2_common",
-    "ec2_instances",
+    # "ec2_instances", # TODO: remove
     "ec2_keypair",
     "ec2_placement_group",
     "ec2_rds_dbinstance",
@@ -43,8 +46,10 @@ __all__ = (
     "aws_data_lifecycle_manager",
 )
 
+from . import definition
+from . import state
 from . import aws_ec2_launch_template
-from . import aws_spot_fleet_request
+from . import spot_fleet
 from . import aws_vpn_connection
 from . import aws_vpn_connection_route
 from . import aws_vpn_gateway
@@ -53,7 +58,7 @@ from . import cloudwatch_log_stream
 from . import cloudwatch_metric_alarm
 from . import ebs_volume
 from . import ec2_common
-from . import ec2_instances
+# from . import ec2_instances # TODO: remove
 from . import ec2_keypair
 from . import ec2_placement_group
 from . import ec2_rds_dbinstance

@@ -2,8 +2,15 @@
 
 with lib;
 
+let
+  cfg = config.iamRole;
+  stateReference = { resource, field, reftype }: {
+    _type = "reference-type";
+    _reftype = reftype.name;
+    inherit resource field;
+  };
+in
 {
-
   options = {
 
     name = mkOption {
@@ -30,4 +37,12 @@ with lib;
     };
 
   } // import ./common-ec2-options.nix { inherit lib; };
+
+  config =
+    mkIf
+      # (if cfg.launchSpecifications ?? || cfg then true else throw "\nFailed assertion: ${message}")
+      true
+      {
+        _type = "iam-role";
+      };
 }

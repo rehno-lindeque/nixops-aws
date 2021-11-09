@@ -38,7 +38,7 @@ let
       default = null;
       example = "sfr-00000000-0000-0000-0000-000000000000";
       # type = with types; either str (resource "ec2-spot-fleet-request");
-      type = with types; nullOr (either str (resource "aws-spot-fleet-request"));
+      type = with types; nullOr (either str (resource "aws-spot-fleet"));
       apply = x: if x == null || builtins.isString x then x else "res-${x._name}";
       description = ''
         EC2 spot fleet request to use as the target of this deployment.
@@ -77,7 +77,7 @@ in
     #   str
     #   (resource "ec2-instance")
     #   (resource "ec2-spot-request")
-    #   (resource "aws-spot-fleet-request")
+    #   (resource "aws-spot-fleet")
     # ];
     # apply = x: if builtins.isString x then x else "res-${x._type}-${x._name}";
     description = ''

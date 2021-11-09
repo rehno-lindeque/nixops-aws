@@ -120,5 +120,5 @@ with lib;
   // (import ./common-ec2-options.nix { inherit lib; })
   // (import ./common-ec2-instance-options.nix { inherit lib; });
 
-  config._type = "aws-ec2-launch-template";
+  config._type = "ec2-launch-template";
 }

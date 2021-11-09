@@ -55,6 +55,7 @@ class IAMRoleState(nixops.resources.ResourceState[IAMRoleDefinition]):
     state = nixops.util.attr_property(
         "state", nixops.resources.ResourceState.MISSING, int
     )
+    arn = nixops.util.attr_property("arn", None)
     role_name = nixops.util.attr_property("ec2.roleName", None)
     access_key_id = nixops.util.attr_property("ec2.accessKeyId", None)
     policy = nixops.util.attr_property("ec2.policy", None)
@@ -73,6 +74,26 @@ class IAMRoleState(nixops.resources.ResourceState[IAMRoleDefinition]):
     def show_type(self):
         s = super(IAMRoleState, self).show_type()
         return s
+
+    def check(self):
+        if self.state == self.MISSING:
+            return
+
+        response = self._get_role(self.role_name, True)
+
+        with self.depl._db:
+            if not response:
+                self.arn = None
+                self.state = self.MISSING
+                self.role_name = None
+                self.access_key_id = None
+                self.policy = None
+                self.assume_role_policy = None
+                self.tags = {}
+                return
+            else:
+                self.state = self.UP
+                self.arn = response['get_role_response']['get_role_result']['role']['arn']
 
     @property
     def resource_id(self):

@@ -9,5 +9,6 @@ in pkgs.mkShell {
       python = pkgs.python39;
     })
     pkgs.poetry
+    pkgs.nixpkgs-fmt
   ];
 }

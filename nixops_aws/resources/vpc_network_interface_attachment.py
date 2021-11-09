@@ -8,7 +8,7 @@ import botocore
 
 import nixops.util
 import nixops.resources
-from nixops_aws.backends.ec2 import EC2State
+# from nixops_aws.backends.ec2 import EC2State
 from nixops_aws.resources.ec2_common import EC2CommonState
 from nixops_aws.resources.vpc_network_interface import VPCNetworkInterfaceState
 from nixops.diff import Handler
@@ -80,12 +80,13 @@ class VPCNetworkInterfaceAttachmentState(
         return "resources.vpcNetworkInterfaceAttachments."
 
     def create_after(self, resources, defn):
-        return {
-            r
-            for r in resources
-            if isinstance(r, vpc_network_interface.VPCNetworkInterfaceState)
-            or isinstance(r, EC2State)
-        }
+        # return {
+        #     r
+        #     for r in resources
+        #     if isinstance(r, vpc_network_interface.VPCNetworkInterfaceState)
+        #     or isinstance(r, EC2State)
+        # }
+        pass
 
     def ensure_state_up(self):
         config: VPCNetworkInterfaceAttachmentDefinition = self.get_defn()
@@ -133,12 +134,12 @@ class VPCNetworkInterfaceAttachmentState(
 
         self._state["region"] = config.config.region
         vm_id = config.config.instanceId
-        if vm_id.startswith("res-"):
-            ec2_res = self.depl.get_typed_resource(
-                vm_id[4:].split(".")[0], "ec2", EC2State
-            )
-            assert ec2_res.vm_id is not None
-            vm_id = ec2_res.vm_id
+        # if vm_id.startswith("res-"):
+        #     ec2_res = self.depl.get_typed_resource(
+        #         vm_id[4:].split(".")[0], "ec2", EC2State
+        #     )
+        #     assert ec2_res.vm_id is not None
+        #     vm_id = ec2_res.vm_id
 
         eni_id = config.config.networkInterfaceId
         if eni_id.startswith("res-"):

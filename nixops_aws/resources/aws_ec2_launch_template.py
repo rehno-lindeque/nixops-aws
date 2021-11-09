@@ -36,27 +36,27 @@ else:
     LaunchTemplateEbsBlockDeviceRequestTypeDef = dict
 
 
-class awsEc2LaunchTemplateDefinition(nixops.resources.ResourceDefinition):
+class Ec2LaunchTemplateDefinition(nixops.resources.ResourceDefinition):
     """Definition of an ec2 launch template"""
 
     config: Ec2LaunchTemplateOptions
 
     @classmethod
     def get_type(cls):
-        return "aws-ec2-launch-template"
+        return "ec2-launch-template"
 
     @classmethod
     def get_resource_type(cls):
-        return "awsEc2LaunchTemplate"
+        return "ec2LaunchTemplates"
 
     def show_type(self):
         return "{0}".format(self.get_type())
 
 
-class awsEc2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
+class Ec2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
     """State of an ec2 launch template"""
 
-    definition_type = awsEc2LaunchTemplateDefinition
+    definition_type = Ec2LaunchTemplateDefinition
 
     state = nixops.util.attr_property(
         "state", nixops.resources.ResourceState.MISSING, int
@@ -104,7 +104,7 @@ class awsEc2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
 
     @classmethod
     def get_type(cls):
-        return "aws-ec2-launch-template"
+        return "ec2-launch-template"
 
     def __init__(self, depl, name, id):
         nixops.resources.ResourceState.__init__(self, depl, name, id)
@@ -115,7 +115,7 @@ class awsEc2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
         return self.state != self.MISSING
 
     def show_type(self):
-        s = super(awsEc2LaunchTemplateState, self).show_type()
+        s = super(Ec2LaunchTemplateState, self).show_type()
         return s
 
     @property
@@ -181,7 +181,8 @@ class awsEc2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
 
     def create(self, defn, check, allow_reboot, allow_recreate):
         if self.region is None:
-            self.region = defn.config.region
+            with self.depl._db:
+                self.region = defn.config.region
         elif self.region != defn.config.region:
             self.warn(
                 "cannot change region of a running instance (from ‘{}‘ to ‘{}‘)".format(
@@ -256,7 +257,8 @@ class awsEc2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
         self._destroy()
         return True
 
-    # Boto3 helpers
+    # Boto helpers
+
     def _block_device_mappings_from_ami(
         self, image_id,
     ) -> Sequence[LaunchTemplateBlockDeviceMappingRequestTypeDef]:
@@ -416,7 +418,8 @@ class awsEc2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
         data["BlockDeviceMappings"] = self._block_device_mappings_from_ami(config.ami)
         return data
 
-    # Boto3 wrappers
+    # Boto wrappers
+
     def _create_launch_template(
         self, request: CreateLaunchTemplateRequestRequestTypeDef
     ) -> CreateLaunchTemplateResultTypeDef:
