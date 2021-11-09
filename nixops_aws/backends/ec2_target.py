@@ -23,7 +23,8 @@ from nixops.nix_expr import Function, Call, RawValue
 
 # from nixops_aws.resources.ec2_common
 
-from .ec2_target_options import Ec2TargetMachineOptions
+from .types.ec2_target import Ec2TargetMachineOptions
+from ..util.references import ResourceReferenceOption  # TODO: move util one directory up
 
 
 # name conventions:
@@ -54,7 +55,7 @@ class EC2TargetDefinition(MachineDefinition):
         #     raise Exception("no AMI defined for EC2 machine ‘{0}’".format(self.name))
         # self.instance_type = self.config.ec2.instanceType
         # self.key_pair = self.config.ec2.keyPair
-        # self.private_key = self.config.ec2.privateKey
+        self.private_key = self.config.ec2target.privateKey
         # self.security_groups = self.config.ec2.securityGroups
         # self.placement_group = self.config.ec2.placementGroup
         # self.instance_profile = self.config.ec2.instanceProfile
@@ -1146,11 +1147,10 @@ class EC2TargetState(MachineState[EC2TargetDefinition]):
     def create(  # noqa: C901
         self, defn: EC2TargetDefinition, check, allow_reboot, allow_recreate
     ):
-        assert False # TODO
-        # if self.state != self.UP:
-        #     check = True
+        if self.state != self.UP:
+            check = True
 
-        # self.set_common_state(defn)
+        self.set_common_state(defn)
 
         # if defn.subnet_id.startswith("res-"):
         #     subnet_res = self.depl.get_typed_resource(
@@ -1169,7 +1169,7 @@ class EC2TargetState(MachineState[EC2TargetDefinition]):
         #         "please set ‘deployment.ec2.accessKeyId’, $EC2_ACCESS_KEY or $AWS_ACCESS_KEY_ID"
         #     )
 
-        # self.private_key_file = defn.private_key or None
+        self.private_key_file = defn.private_key or None
 
         # if self.region is None:
         #     self.region = defn.region

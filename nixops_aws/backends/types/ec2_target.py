@@ -2,6 +2,7 @@ from nixops.backends import MachineOptions
 from nixops.resources import ResourceOptions
 # from typing import Union
 from typing import Optional
+from ..util.references import ResourceReferenceOption
 
 
 # class Ec2TargetInstanceOptions(ResourceOptions):
@@ -17,9 +18,9 @@ from typing import Optional
 
 
 class Ec2TargetTargetOptions(ResourceOptions):
-    spotInstanceId: Optional[str]
-    spotRequestId: Optional[str]
-    spotFleetRequestId: Optional[str]
+    spotInstanceId: Optional[ResourceReferenceOption[str, str]]
+    spotRequestId: Optional[ResourceReferenceOption[str, str]]
+    spotFleetRequestId: Optional[ResourceReferenceOption[str, str]]
 
 
 class Ec2TargetOptions(ResourceOptions):
@@ -30,6 +31,7 @@ class Ec2TargetOptions(ResourceOptions):
     # ]
     # target: str
     target: Ec2TargetTargetOptions
+    privateKey: str
 
 
 class Ec2TargetMachineOptions(MachineOptions):

@@ -502,6 +502,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             self.state = self.UNKNOWN
         while self.state != self.UP:
             response = self._describe_spot_fleet_requests()
+            print("!!!!!!!!!!RESPONSE", "describe", response)
             for config in response["SpotFleetRequestConfigs"]:
                 check_response_field(
                     "SpotFleetRequestId",
@@ -582,6 +583,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
 
         self.log("creating spot fleet request")
         response = self._request_spot_fleet()
+        print("!!!RESPONSE", "request_spot_fleet", response)
 
         # Save essential state
         with self.depl._db:
@@ -820,8 +822,8 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         response = self.get_client("ec2", region=defn.config.region).request_spot_fleet(
             SpotFleetRequestConfig=unpack_create_spot_fleet_request(
                 config = self.resolve_config(defn),
-                **kwargs,
             ),
+            **kwargs,
         )
 
         # if not kwargs.get("DryRun"):
@@ -895,11 +897,11 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
     ) -> Optional[ModifySpotFleetRequestResponseTypeDef]:
         defn: AwsSpotFleetDefinition = self.get_defn()
         response = self.get_client("ec2").modify_spot_fleet_request(
-            unpack_modify_spot_fleet_request(
+            **unpack_modify_spot_fleet_request(
                 self.get_defn().config,
                 SpotFleetRequestId=self._state["spotFleetRequestId"],
-                **kwargs,
-            )
+            ),
+            **kwargs,
         )
         # try:
         #     response = self.get_client("ec2").modify_spot_fleet_request(
