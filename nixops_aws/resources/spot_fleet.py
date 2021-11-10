@@ -48,6 +48,8 @@ if TYPE_CHECKING:
         SpotFleetRequestConfigDataTypeDef,
         DescribeSpotFleetRequestsRequestRequestTypeDef,
         DescribeSpotFleetRequestsResponseTypeDef,
+        DescribeSpotFleetInstancesRequestRequestTypeDef,
+        DescribeSpotFleetInstancesResponseTypeDef,
         ModifySpotFleetRequestRequestRequestTypeDef,
         ModifySpotFleetRequestResponseTypeDef,
         CancelSpotFleetRequestsRequestRequestTypeDef,
@@ -65,6 +67,8 @@ else:
     SpotFleetRequestConfigDataTypeDef = dict
     DescribeSpotFleetRequestsRequestRequestTypeDef = dict
     DescribeSpotFleetRequestsResponseTypeDef = dict
+    DescribeSpotFleetInstancesRequestRequestTypeDef = dict
+    DescribeSpotFleetInstancesResponseTypeDef = dict
     ModifySpotFleetRequestRequestRequestTypeDef = dict
     ModifySpotFleetRequestResponseTypeDef = dict
     CancelSpotFleetRequestsRequestRequestTypeDef = dict
@@ -425,6 +429,25 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
 
     #     return
 
+    def _check(self):
+        if self._state.get("spotFleetRequestId", None) is None:
+            return
+        try:
+            self._describe_spot_fleet_requests()
+        except botocore.exceptions.ClientError as error:
+            errorNotFound = "InvalidSpotFleetRequestId.NotFound"  # TODO: Check
+            if error.response["Error"]["Code"] == errorNotFound:
+                self.warn(
+                    "spotFleetId `{0}` was deleted from outside nixops,"
+                    " it needs to be recreated...".format(self._state["spotFleetRequestId"])
+                )
+                self.cleanup_state()
+            else:
+                raise error
+
+        self._check_instances()
+
+
     def _destroy(self):
         if self.state is self.MISSING:
             return
@@ -451,9 +474,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             #     raise error
             raise error
 
-        with self.depl._db:
-            self.state = self.MISSING
-            self._state["spotFleetRequestId"] = None
+        self.cleanup_state()
 
     def destroy(self, wipe=False):
         self._destroy()
@@ -488,6 +509,11 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
     #     return True
 
     # Synchronize state changes
+    def cleanup_state(self):
+        with self.depl._db:
+            self.state = self.MISSING
+            self._state["spotFleetRequestId"] = None
+            # TODO cleanup more state
 
     def wait_for_spot_fleet_request_available(self):
         def check_response_field(name, value, expected_value):
@@ -541,30 +567,16 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         # with self.depl._db:
         #     TODO
 
-
     def ensure_spot_fleet_up(self, check):
         defn: AwsSpotFleetDefinition = self.get_defn()
         self._state["region"] = defn.config.region
 
+        if check:
+            self._check()
+
+        # TODO: Is recreate necessary?
+
         if self._state.get("spotFleetRequestId", None):
-            if check:
-                try:
-                    self.get_client("ec2").describe_spot_fleet_requests(
-                        spotFleetRequestIds=[self._state["spotFleetRequestId"]]
-                    )
-                except botocore.exceptions.ClientError as error:
-                    errorNotFound = "InvalidSpotFleetRequestId.NotFound"  # TODO: Check
-                    if error.response["Error"]["Code"] == errorNotFound:
-                        # TODO: recreate?
-                        self.warn(
-                            "TODO: "
-                            "spotFleetId `{}` was deleted from outside nixops,"
-                            " recreating ...".format(self._state["spotFleetRequestId"])
-                        )
-                        # self.realize_create_spot_fleet(allow_recreate = True)
-                        # ...
-                    else:
-                        raise error
             if self.state != self.UP:
                 self.wait_for_spot_fleet_request_available()
 
@@ -585,7 +597,6 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
 
         self.log("creating spot fleet request")
         response = self._request_spot_fleet()
-        print("!!!RESPONSE", "request_spot_fleet", response)
 
         # Save essential state
         with self.depl._db:
@@ -597,26 +608,46 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             # Unmodifiable keys
             self._state["allocationStrategy"] = defn.config.allocationStrategy
             self._state["fulfilledCapacity"] = defn.config.fulfilledCapacity
-            self._state["iamFleetRole"] = json.dumps(defn.config.iamFleetRole, cls=nixops.util.NixopsEncoder)
-            self._state["instanceInterruptionBehavior"] = defn.config.instanceInterruptionBehavior
+            self._state["iamFleetRole"] = json.dumps(
+                defn.config.iamFleetRole, cls=nixops.util.NixopsEncoder
+            )
+            self._state[
+                "instanceInterruptionBehavior"
+            ] = defn.config.instanceInterruptionBehavior
             self._state["instancePoolsToUseCount"] = defn.config.instancePoolsToUseCount
-            self._state["launchSpecifications"] = json.dumps(defn.config.launchSpecifications, cls=nixops.util.NixopsEncoder)
+            self._state["launchSpecifications"] = json.dumps(
+                defn.config.launchSpecifications, cls=nixops.util.NixopsEncoder
+            )
             self._state["loadBalancersConfig"] = defn.config.loadBalancersConfig
-            self._state["onDemandAllocationStrategy"] = defn.config.onDemandAllocationStrategy
-            self._state["onDemandFulfilledCapacity"] = defn.config.onDemandFulfilledCapacity
+            self._state[
+                "onDemandAllocationStrategy"
+            ] = defn.config.onDemandAllocationStrategy
+            self._state[
+                "onDemandFulfilledCapacity"
+            ] = defn.config.onDemandFulfilledCapacity
             self._state["onDemandMaxTotalPrice"] = defn.config.onDemandMaxTotalPrice
             self._state["region"] = defn.config.region
-            self._state["replaceUnhealthyInstances"] = defn.config.replaceUnhealthyInstances
-            self._state["spotMaintenanceStrategies"] = defn.config.spotMaintenanceStrategies
+            self._state[
+                "replaceUnhealthyInstances"
+            ] = defn.config.replaceUnhealthyInstances
+            self._state[
+                "spotMaintenanceStrategies"
+            ] = defn.config.spotMaintenanceStrategies
             self._state["spotMaxTotalPrice"] = defn.config.spotMaxTotalPrice
             self._state["spotPrice"] = defn.config.spotPrice
-            self._state["terminateInstancesWithExpiration"] = defn.config.terminateInstancesWithExpiration
+            self._state[
+                "terminateInstancesWithExpiration"
+            ] = defn.config.terminateInstancesWithExpiration
             self._state["type"] = defn.config.type
             # self._state["validFrom"] = defn.config.validFrom
             # self._state["validUntil"] = defn.config.validUntil
             # Modifiable keys
-            self._state["excessCapacityTerminationPolicy"] = defn.config.excessCapacityTerminationPolicy
-            self._state["launchTemplateConfigs"] = json.dumps(defn.config.launchTemplateConfigs, cls=nixops.util.NixopsEncoder)
+            self._state[
+                "excessCapacityTerminationPolicy"
+            ] = defn.config.excessCapacityTerminationPolicy
+            self._state["launchTemplateConfigs"] = json.dumps(
+                defn.config.launchTemplateConfigs, cls=nixops.util.NixopsEncoder
+            )
             self._state["onDemandTargetCapacity"] = defn.config.onDemandTargetCapacity
             self._state["targetCapacity"] = defn.config.targetCapacity
 
@@ -823,7 +854,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         defn: AwsSpotFleetDefinition = self.get_defn()
         response = self.get_client("ec2", region=defn.config.region).request_spot_fleet(
             SpotFleetRequestConfig=unpack_create_spot_fleet_request(
-                config = self.resolve_config(defn),
+                config=self.resolve_config(defn),
             ),
             **kwargs,
         )
@@ -979,6 +1010,24 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
 
         return response
 
+    # Dependent resources:
+    def _describe_spot_fleet_instances(
+        self,
+        **kwargs,
+    ) -> DescribeSpotFleetInstancesResponseTypeDef:
+        response = self.get_client("ec2").describe_spot_fleet_instances(
+            SpotFleetRequestId=self._state["spotFleetRequestId"], **kwargs
+        )
+        return response
+
+    def _check_instances(self):
+        if self._state.get("spotFleetRequestId", None) is None:
+            return
+        response = self._describe_spot_fleet_instances()
+        with self.depl._db:
+            self._state["activeInstances"] = response["ActiveInstances"]
+
+    # TODO: remove below
     def resolve_resource(
         self, ref: Optional[Unresolved], resource_type, state_type: Type[T]
     ) -> Optional[T]:
@@ -1085,10 +1134,15 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         self, config
     ) -> List[nixops.resources.ResourceState]:
         def resolve_each():
-            yield self.resolve_resource(config.iamFleetRole.value, "iam-role", IAMRoleState)
+            yield self.resolve_resource(
+                config.iamFleetRole.value, "iam-role", IAMRoleState
+            )
             for template_config in config.launchTemplateConfigs or []:
                 if template_config.launchTemplateSpecification:
-                    if template_config.launchTemplateSpecification.launchTemplateId is not None:
+                    if (
+                        template_config.launchTemplateSpecification.launchTemplateId
+                        is not None
+                    ):
                         yield self.resolve_resource(
                             template_config.launchTemplateSpecification.launchTemplateId.value,
                             "ec2-launch-template",
@@ -1114,7 +1168,9 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
                 for group in spec.securityGroups or []:
                     if group.groupId is not None:
                         yield self.resolve_resource(
-                            group.groupId.value, "ec2-security-group", EC2SecurityGroupState
+                            group.groupId.value,
+                            "ec2-security-group",
+                            EC2SecurityGroupState,
                         )
 
         return [r for r in resolve_each() if r is not None]

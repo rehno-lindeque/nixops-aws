@@ -107,7 +107,7 @@ class EC2TargetDefinition(AwsMachineDefinition[Ec2TargetMachineOptions]):
         # )
 
 
-class EC2TargetState(AwsMachineState[EC2TargetDefinition]):
+class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
     """State of an EC2 machine."""
 
     definition_type = EC2TargetDefinition
