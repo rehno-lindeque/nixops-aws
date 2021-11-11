@@ -30,7 +30,7 @@ from .aws_ec2_launch_template import Ec2LaunchTemplateState
 from .definition import AwsResourceDefinition
 from .ec2_security_group import EC2SecurityGroupState
 from .iam_role import IAMRoleState
-from .implicit.instance import AwsEc2InstanceState
+from .managed.instance import AwsEc2InstanceState
 from .state import AwsResourceState
 from .util.references import ResourceReferenceOption, Unresolved
 from .types.spot_fleet import (
@@ -566,7 +566,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
                         )
                     )
                 with self.depl._db:
-                    self.state = self.resource_state_from_boto(
+                    self.state = self.resource_status_from_boto(
                         config["SpotFleetRequestState"]
                     )
             if self.state not in {self.UP, self.STARTING}:
@@ -711,7 +711,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         # )
         pass
 
-    def resource_state_from_boto(self, state: BatchStateType) -> int:
+    def resource_status_from_boto(self, state: BatchStateType) -> int:
         if state == "active":
             return self.UP
         elif state == "cancelled":

@@ -153,6 +153,18 @@ class AwsResourceState(DiffEngineResourceState, Generic[ConfigT]):
             resource._check()
 
 
+ManagedResourceStatus = Union[
+    Literal[0],
+    Literal[1],
+    Literal[2],
+    Literal[3],
+    Literal[4],
+    Literal[5],
+    Literal[6],
+    Literal[7],
+]
+
+
 # TODO: inherit from ResourceState/GenericResourceState/ImplicitResourceState/ManagedResourceState
 class AwsManagedResourceState:
     # TODO merge with ResourceState
@@ -168,16 +180,8 @@ class AwsManagedResourceState:
     UNREACHABLE: Literal[6] = 6  # machine should be up, but is unreachable
     RESCUE: Literal[7] = 7  # rescue system is active for the machine
 
-    state: Union[
-        Literal[0],
-        Literal[1],
-        Literal[2],
-        Literal[3],
-        Literal[4],
-        Literal[5],
-        Literal[6],
-        Literal[7],
-    ] = nixops.util.attr_property("state", UNKNOWN, int)
+    # TODO
+    # state: ManagedResourceStatus = nixops.util.attr_property("state", UNKNOWN, int)
 
     _state: ManagedStateDict
 
@@ -191,6 +195,7 @@ class AwsManagedResourceState:
         self.id = id
         self.logger = self.depl.logger.get_logger_for(name)
         self._state = ManagedStateDict(depl, id)
+        self.state = self.UNKNOWN  # TODO: we're not storing state (status) in the db for now
 
     def _check(self):
         return True

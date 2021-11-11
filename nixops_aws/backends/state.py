@@ -58,7 +58,6 @@ class AwsMachineState(MachineState, Generic[ConfigT]):
             resource = AwsMachineState.resolve_resource(self.depl, ref.value)
             if resource is not None:
                 state_path = ref.value[4:].split(".")[2:]
-                # print("state_path", state_path)
                 if isinstance(resource, AwsResourceState):
                     yield (ref.value, resource._state.get(state_path[0]))
                 elif isinstance(resource, DiffEngineResourceState):

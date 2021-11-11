@@ -24,15 +24,16 @@ from nixops.state import StateDict, RecordId
 # import datetime
 import time
 # from typing import Dict, Tuple, Any, Union, List
-from typing import Type, Generic, TypeVar
+from typing import Type, Generic, TypeVar, Optional
 
 # from nixops_aws.resources.ec2_common
 
 from .definition import AwsMachineDefinition
 from .state import AwsMachineState
-from .types.ec2_target import Ec2TargetMachineOptions
+from .types.ec2_target import Ec2TargetMachineOptions, Ec2TargetOptions
 from ..resources.util.references import ResourceReferenceOption
 from ..resources.spot_fleet import AwsSpotFleetState
+from ..resources.managed.instance import AwsEc2InstanceState
 
 
 ConfigType = TypeVar("ConfigType", bound=MachineOptions)
@@ -171,7 +172,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
     # virtualization_type = nixops.util.attr_property("ec2.virtualizationType", None)
 
     def __init__(self, depl: nixops.deployment.Deployment, name: str, id: RecordId):
-        super(AwsMachineState, self).__init__(depl, name, id)
+        super().__init__(depl, name, id)
         self._state = StateDict(depl, id)
         # self._conn = None
         # self._conn_vpc = None
@@ -180,44 +181,41 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # self._cached_instance = None
 
     def _reset_state(self):
-        # """Discard all state pertaining to an instance."""
-        # with self.depl._db:
-        #     self.state = MachineState.MISSING
-        #     self.associate_public_ip_address = None
-        #     self.use_private_ip_address = None
-        #     self.source_dest_check = None
-        #     self.vm_id = None
-        #     self.public_ipv4 = None
-        #     self.private_ipv4 = None
-        #     self.public_dns_name = None
-        #     self.elastic_ipv4 = None
-        #     self.region = None
-        #     self.zone = None
-        #     self.tenancy = None
-        #     self.ami = None
-        #     self.instance_type = None
-        #     self.ebs_optimized = None
-        #     self.key_pair = None
-        #     self.public_host_key = None
-        #     self.private_host_key = None
-        #     self.instance_profile = None
-        #     self.security_groups = None
-        #     self.placement_group = None
-        #     self.tags = {}
-        #     self.block_device_mapping = {}
-        #     self.root_device_type = None
-        #     self.backups = {}
-        #     self.dns_hostname = None
-        #     self.dns_ttl = None
-        #     self.subnet_id = None
-
-        #     self.client_token = None
-        #     self.spot_instance_request_id = None
-        #     self.spot_instance_price = None
-        return
+        """Discard all state pertaining to an instance."""
+        with self.depl._db:
+            self.state = MachineState.MISSING
+            # self.associate_public_ip_address = None
+            # self.use_private_ip_address = None
+            # self.source_dest_check = None
+            self.vm_id = None
+            # self.public_ipv4 = None
+            # self.private_ipv4 = None
+            # self.public_dns_name = None
+            # self.elastic_ipv4 = None
+            # self.region = None
+            # self.zone = None
+            # self.tenancy = None
+            # self.ami = None
+            # self.instance_type = None
+            # self.ebs_optimized = None
+            # self.key_pair = None
+            # self.public_host_key = None
+            # self.private_host_key = None
+            # self.instance_profile = None
+            # self.security_groups = None
+            # self.placement_group = None
+            # self.tags = {}
+            # self.block_device_mapping = {}
+            # self.root_device_type = None
+            # self.backups = {}
+            # self.dns_hostname = None
+            # self.dns_ttl = None
+            # self.subnet_id = None
+            # self.client_token = None
+            # self.spot_instance_request_id = None
+            # self.spot_instance_price = None
 
     def get_ssh_name(self):
-        assert False  # TODO
         # retVal = None
         # if self.use_private_ip_address:
         #     if not self.private_ipv4:
@@ -236,6 +234,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #         )
         #     retVal = self.public_ipv4
         # return retVal
+        return self._state.get("publicIpAddress") # TODO: or privateIpAddress? (when?)
 
     def get_ssh_private_key_file(self):
         assert False  # TODO
@@ -258,10 +257,11 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return None
 
     def get_ssh_flags(self, *args, **kwargs):
-        assert False  # TODO
+        # TODO
         # file = self.get_ssh_private_key_file()
-        # super_flags = super(EC2State, self).get_ssh_flags(*args, **kwargs)
+        # super_flags = super().get_ssh_flags(*args, **kwargs)
         # return super_flags + (["-i", file] if file else [])
+        return super().get_ssh_flags(*args, **kwargs)
 
     def get_physical_spec(self):
         # block_device_mapping = {}
@@ -345,16 +345,15 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return keys
 
     def show_type(self):
-        assert False  # TODO
-        # s = super(EC2State, self).show_type()
-        # if self.zone or self.region:
-        #     s = "{0} [{1}; {2}]".format(s, self.zone or self.region, self.instance_type)
-        # return s
+        s = super().show_type()
+        placement = self._state.get("zone", self._state.get("region"))
+        if placement is not None:
+            s = "{0} [{1}; {2}]".format(s, placement, self._state.get("instanceType"))
+        return s
 
     @property
     def resource_id(self):
-        assert False  # TODO
-        # return self.vm_id
+        return self.vm_id
 
     def address_to(self, m):
         assert False  # TODO
@@ -956,7 +955,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
         # return instance
 
-    def allocate_instance(self, config):
+    def allocate_instance(self, config: Ec2TargetOptions) -> Optional[AwsEc2InstanceState]:
         # # Use a client token to ensure that instance creation is
         # # idempotent; i.e., if we get interrupted before recording
         # # the instance ID, we'll get the same instance ID on the
@@ -976,35 +975,42 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
                 "(WORK-IN-PROGRESS): Spot fleet requests are the only supported targets for now"
             )
         if config.target.spotFleetRequestId.reference is None:
+            # TODO create resource states for unmanaged, but implicit/referenced resources
             raise Exception(
-                "(): Spot fleet with request id `{}` must exist as a nixops resource".format(
+                "(): Spot fleet with request id `{}` must currently exist as a nixops resource".format(
                     config.target.spotFleetRequestId.value
                 )
             )
 
-        ref = config.spotFleetRequestId.reference
+        ref = config.target.spotFleetRequestId.reference
         spot_fleet = self.depl.get_typed_resource(
             ref[4:].split(".")[0], "aws-spot-fleet", AwsSpotFleetState
         )
 
-        # TODO wait for an unallocated instance
-        # TODO possibly use tags to indicate whether an instance is allocated
-        # TODO deallocate/destroy instances when this target is torn down
-        active_instances = []
-        while True:
-            active_instances = spot_fleet._state.get("activeInstances", [])
-            print("ACTIVE INSTANCES", active_instances)
-            if active_instances == []:
-                self.log_continue(".")
-                time.sleep(1)
-                continue
-            else:
-                self.log_end("done")
-                break
+        # # TODO wait for an unallocated instance
+        # # TODO possibly use tags to indicate whether an instance is allocated
+        # # TODO deallocate/destroy instances when this target is torn down
+        # active_instances = []
+        # while True:
+        #     active_instances = spot_fleet._state.get("activeInstances", [])
+        #     print("ACTIVE INSTANCES", active_instances)
+        #     if active_instances == []:
+        #         self.log_continue(".")
+        #         time.sleep(1)
+        #         continue
+        #     else:
+        #         self.log_end("done")
+        #         break
 
-        # Return the first available instance
-        # TODO: convert to instance state?
-        return active_instances[0]
+        # Make sure spot fleet instances are up to date
+        spot_fleet._check_instances()
+
+        # Return the first available instance'
+        # TODO: filter by unallocated
+        instances = [r for r in spot_fleet.managed_resources.values() if isinstance(r, AwsEc2InstanceState)]
+        if len(instances) > 0:
+            return instances[0]
+        return None
 
     # def create_instance(self, defn, zone, user_data, ebs_optimized, args):
     # IamInstanceProfile = {}
@@ -1316,18 +1322,27 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # update_instance_profile = True
 
         # Allocate an instance from the target
-        if self.vm_id is not None:
+        if self.vm_id is None:
             self.log(
                 "allocating EC2 instance from target ‘{0}’...".format(
-                    config.target.spotInstanceId
-                    or config.target.spotRequestId
-                    or config.target.spotFleetRequestId
+                    config.ec2target.target.spotInstanceId.value
+                    or config.ec2target.target.spotRequestId.value
+                    or config.ec2target.target.spotFleetRequestId.value
                 )
             )
-            instance_state = self.allocate_instance(config)
+            instance = self.allocate_instance(config.ec2target)
+            if instance is None:
+                raise Exception("No instance available to allocate")
 
             with self.depl._db:
-                self.vm_id = instance_state['InstanceId']
+                instance_id = instance._state["instanceId"]
+                private_ip_address =  instance._state["privateIpAddress"]
+                public_ip_address =  instance._state["publicIpAddress"]
+
+                self.vm_id = instance_id
+                self._state["privateIpAddress"] = private_ip_address
+                self._state["publicIpAddress"] = public_ip_address
+                self._state["zone"] = instance._state["zone"]
                 # self.ami = defn.ami
                 # self.instance_type = defn.instance_type
                 # self.ebs_optimized = ebs_optimized
@@ -1344,6 +1359,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
             # # instance has been provisioned in case of "one-time" requests
             # if defn.spot_instance_request_type == "one-time":
             #     self._cancel_spot_request()
+            self.log("allocated {0} with public ip address {1}".format(instance_id, public_ip_address))
 
         # # There is a short time window during which EC2 doesn't
         # # know the instance ID yet.  So wait until it does.
@@ -1867,7 +1883,6 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # volume.delete()
 
     def destroy(self, wipe=False):
-        assert False  # TODO
         # self._cancel_spot_request()
 
         # if not (self.vm_id or self.client_token):
@@ -1918,6 +1933,8 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #         self.update_block_device_mapping(device_stored, None)
 
         # return True
+        self._reset_state()
+        return True
 
     def stop(self):
         assert False  # TODO
