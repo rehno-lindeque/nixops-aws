@@ -322,6 +322,8 @@ def wait_for_{r.factory_snake_case or r.snake_case}_available(self):
 
 
 def gen_resource_realize_create(r: Resource):
+    if r.implicit:
+        return ""
     return indent(
         f"""
 def realize_create_{r.snake_case}(self, allow_recreate):
@@ -372,6 +374,8 @@ def realize_create_{r.snake_case}(self, allow_recreate):
 
 
 def gen_resource_realize_modify(r: Resource):
+    if r.implicit:
+        return ""
     return indent(
         f"""
 def realize_modify_{r.snake_case}(self, allow_recreate):
@@ -593,7 +597,10 @@ def gen_boto_wrapper(
     service="ec2",
 ):
     if method is None or annotations is None or typedef is None:
-        raise Exception("null method, annotations, or typedef")
+        if r.implicit:
+            return
+        else:
+            raise Exception("null method, annotations, or typedef")
 
     required_keys = {uncapitalize(k) for k in typedef.__required_keys__}
     required_plural_keys = required_keys.intersection(

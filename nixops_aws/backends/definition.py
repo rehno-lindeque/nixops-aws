@@ -5,16 +5,16 @@ from ..resources.util import references
 from ..resources.util.references import ResourceReferenceOption
 from ..resources.util.eval import transform_options
 
-ConfigType = TypeVar("ConfigType", bound=MachineOptions)
+ConfigT = TypeVar("ConfigT", bound=MachineOptions)
 
 
-class AwsMachineDefinition(MachineDefinition, Generic[ConfigType]):
+class AwsMachineDefinition(MachineDefinition, Generic[ConfigT]):
     """Base class for Aws machine definitions."""
 
-    config: ConfigType
-    config_type: Type[ConfigType]
+    config: ConfigT
+    config_type: Type[ConfigT]
 
-    def prepare_config(self, config_type) -> ConfigType:
+    def prepare_config(self, config_type) -> ConfigT:
         return transform_options(self.resource_eval, config_type, None)
 
     def get_references(self) -> set:

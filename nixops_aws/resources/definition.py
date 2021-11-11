@@ -5,16 +5,16 @@ from .util import references
 from .util.references import ResourceReferenceOption
 from .util.eval import transform_options
 
-ConfigType = TypeVar("ConfigType", bound=ResourceOptions)
+ConfigT = TypeVar("ConfigT", bound=ResourceOptions)
 
 
-class AwsResourceDefinition(ResourceDefinition, Generic[ConfigType]):
+class AwsResourceDefinition(ResourceDefinition, Generic[ConfigT]):
     """Base class for Aws resource definitions."""
 
-    config: ConfigType
-    config_type: Type[ConfigType]
+    config: ConfigT
+    config_type: Type[ConfigT]
 
-    def prepare_config(self, config_type) -> ConfigType:
+    def prepare_config(self, config_type) -> ConfigT:
         return transform_options(self.resource_eval, config_type, None)
 
     def get_references(self) -> set:
@@ -27,3 +27,8 @@ class AwsResourceDefinition(ResourceDefinition, Generic[ConfigType]):
     def show_type(self) -> str:
         """A short description of the type of resource this is"""
         return self.get_type()
+
+
+# TODO: inherit from ResourceDefinition/GenericResourceDefinition/ImplicitResourceDefinition/ManagedResourceDefinition
+class AwsManagedResourceDefinition:
+    pass

@@ -23,12 +23,14 @@ from typing import (
     TYPE_CHECKING,
     TypedDict,
     TypeVar,
+    Set,
 )
 from . import ec2_common
 from .aws_ec2_launch_template import Ec2LaunchTemplateState
 from .definition import AwsResourceDefinition
 from .ec2_security_group import EC2SecurityGroupState
 from .iam_role import IAMRoleState
+from .implicit.instance import AwsEc2InstanceState
 from .state import AwsResourceState
 from .util.references import ResourceReferenceOption, Unresolved
 from .types.spot_fleet import (
@@ -127,7 +129,7 @@ class AwsSpotFleetDefinition(AwsResourceDefinition[AwsSpotFleetOptions]):
         # }
         # updated_config["awsConfig"] = type_defs.RequestSpotFleetRequestRequestTypeDef(aws_config, total=False)
         # nixops.resources.ResourceDefinition.__init__(self, name, ResourceEval(updated_config))
-        super().__init__(name, config)
+        super(AwsResourceDefinition, self).__init__(name, config)
 
     def show_type(self):
         return "{0}".format(self.get_type())
@@ -147,6 +149,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
     _reserved_keys = EC2CommonState.COMMON_EC2_RESERVED + [
         "spotFleetId",
         "spotFleetRequestId",
+        "activeInstances",
     ]
 
     # # region = nixops.util.attr_property("region", None)
@@ -240,7 +243,7 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         return client
 
     def __init__(self, depl, name, id):
-        nixops.resources.DiffEngineResourceState.__init__(self, depl, name, id)
+        AwsResourceState.__init__(self, depl, name, id)
         self._clients = BotoClients()
         # self.spot_fleet_request_id = self._state.get("spotFleetRequestId", None)
         self.handle_create_spot_fleet = Handler(
@@ -288,6 +291,16 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             after=[self.handle_create_spot_fleet],
             handle=self.realize_update_tag,
         )
+
+        # TODO: Move managed_resources implementation to deployment
+        with self.depl._db:
+            c = self.depl._db.cursor()
+            c.execute(
+                "select id, name, type from ManagedResources where deployment = ?",
+                (self.depl.uuid,),
+            )
+            for (id, name, type) in c.fetchall():
+                self.managed_resources[name] = AwsEc2InstanceState(self.depl, name, id)
 
     @classmethod
     def get_type(cls):
@@ -439,14 +452,15 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             if error.response["Error"]["Code"] == errorNotFound:
                 self.warn(
                     "spotFleetId `{0}` was deleted from outside nixops,"
-                    " it needs to be recreated...".format(self._state["spotFleetRequestId"])
+                    " it needs to be recreated...".format(
+                        self._state["spotFleetRequestId"]
+                    )
                 )
-                self.cleanup_state()
+                self.reset_state()
             else:
                 raise error
 
         self._check_instances()
-
 
     def _destroy(self):
         if self.state is self.MISSING:
@@ -474,10 +488,11 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
             #     raise error
             raise error
 
-        self.cleanup_state()
+        self.reset_state()
 
     def destroy(self, wipe=False):
         self._destroy()
+
         return True
 
     # def destroy(self, wipe=False):
@@ -509,11 +524,21 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
     #     return True
 
     # Synchronize state changes
-    def cleanup_state(self):
+    def reset_state(self):
         with self.depl._db:
             self.state = self.MISSING
             self._state["spotFleetRequestId"] = None
             # TODO cleanup more state
+
+        # Deregister all managed resources
+        # TODO: Managed instances may or may not continue to exist after the fleet request is destroyed.
+        #       (See TerminateInstances flag)
+        #       In future we should call _check_managed_resources() and let them delete themselves if they've
+        #       been terminated.
+        for resource_name, resource in dict(self.managed_resources).items():
+            self.log("Deregistering managed resource {}. ".format(resource_name))
+            # TODO: call destroy on managed resource?
+            self._delete_managed_resource(resource)
 
     def wait_for_spot_fleet_request_available(self):
         def check_response_field(name, value, expected_value):
@@ -1021,11 +1046,56 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         return response
 
     def _check_instances(self):
+        # TODO: move more of this logic into AwsManagedResourceState._check_managed_resources
         if self._state.get("spotFleetRequestId", None) is None:
             return
         response = self._describe_spot_fleet_instances()
+
         with self.depl._db:
             self._state["activeInstances"] = response["ActiveInstances"]
+
+        # Create a managed resource state for each active instance that doesn't already exist
+        active_instance_ids: Set[str] = {
+            i["InstanceId"] for i in self._state["activeInstances"]
+        }
+        managed_instances: Dict[str, AwsEc2InstanceState] = {
+            k: resource
+            for k, resource in self.managed_resources.items()
+            if isinstance(resource, AwsEc2InstanceState)
+        }
+        managed_instance_ids: Set[str] = {
+            resource_id
+            for k, resource in managed_instances.items()
+            if (resource_id := resource._state.get("instanceId")) is not None
+        }
+        # Deregister managed resources that no longer exists
+        for resource_name, instance in managed_instances.items():
+            if instance._state.get("instanceId") not in managed_instances:
+                self.log(
+                    "Deregistering managed resource {} (no longer exists). ".format(
+                        resource_name
+                    )
+                )
+                # TODO: call destroy on managed resource?
+                self._delete_managed_resource(instance)
+
+        # Register new managed resources
+        for instance_id in active_instance_ids - managed_instance_ids:
+            # resource_name = "managed-" + instance_id
+            resource_name = instance_id
+
+            # self.managed_resources[resource_name] = AwsEc2InstanceState(
+            #     self.depl, resource_name, instance_id
+            # )
+            self._create_managed_resource(
+                resource_name,
+                "aws-ec2-instance",
+                AwsEc2InstanceState,
+                initial_state={"instanceId": instance_id},
+            )
+
+        # Check all managed resources (synchronize states)
+        self._check_managed_resources()
 
     # TODO: remove below
     def resolve_resource(

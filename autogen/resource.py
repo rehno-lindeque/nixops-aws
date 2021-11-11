@@ -77,6 +77,7 @@ class Resource:
     # (complex)
     physical_spec: Dict[str, str] = None  # type: ignore[assignment]
     cross_references: Dict[Tuple[str], Tuple[str]] = field(default_factory=dict)
+    implicit: bool = False
 
     def __post_init__(self):
         # (annotations)

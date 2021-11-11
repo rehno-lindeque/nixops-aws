@@ -144,6 +144,21 @@ resources = {
         #     EC2Client.deattach_internet_gateway
         # ]
     ),
+    "instance": Resource(
+        resource="instance",
+        implicit=True,
+        create_method=EC2Client.run_instances, #TODO: None
+        describe_method=EC2Client.describe_instances,
+        # modify_method=EC2Client.modify_spot_fleet_request, # TODO: none
+        destroy_method=EC2Client.terminate_instances,
+        # create_annotations=type_defs.SpotFleetRequestConfigDataTypeDef.__annotations__,
+        create_typedef=type_defs.RunInstancesRequestRequestTypeDef, #TODO: None
+        describe_typedef=type_defs.DescribeInstancesRequestRequestTypeDef,
+        modify_typedef=type_defs.ModifyInstanceAttributeRequestRequestTypeDef, #TODO: None
+        destroy_typedef=type_defs.TerminateInstancesRequestRequestTypeDef,
+        cross_references={
+        },
+    ),
 }
 
 

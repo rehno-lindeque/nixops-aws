@@ -28,11 +28,11 @@ from ..resources.util import references
 from ..resources.util.references import ResourceReferenceOption
 from ..resources.util.eval import transform_options
 
-ConfigType = TypeVar("ConfigType", bound=MachineOptions)
+ConfigT = TypeVar("ConfigT", bound=MachineOptions)
 T = TypeVar("T")
 
 
-class AwsMachineState(MachineState, Generic[ConfigType]):
+class AwsMachineState(MachineState, Generic[ConfigT]):
     def resolve_config(self, defn: AwsMachineDefinition):
         # print("resolve_config", defn.resource_eval, defn.config_type)
         env = dict(self.resolve_references(defn))

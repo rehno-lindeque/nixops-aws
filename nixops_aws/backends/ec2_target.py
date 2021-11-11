@@ -6,9 +6,12 @@
 # import boto.ec2
 # import boto.ec2.blockdevicemapping
 # import boto.ec2.networkinterface
+import nixops.deployment
 from nixops.backends import MachineDefinition, MachineState, MachineOptions
 
 from nixops.nix_expr import Function, Call, RawValue
+
+from nixops.state import StateDict, RecordId
 # import nixops_aws.resources.ec2_common
 # import nixops_aws.resources
 # from nixops.util import (
@@ -19,6 +22,7 @@ from nixops.nix_expr import Function, Call, RawValue
 # import nixops_aws.ec2_utils
 # import nixops.known_hosts
 # import datetime
+import time
 # from typing import Dict, Tuple, Any, Union, List
 from typing import Type, Generic, TypeVar
 
@@ -28,6 +32,7 @@ from .definition import AwsMachineDefinition
 from .state import AwsMachineState
 from .types.ec2_target import Ec2TargetMachineOptions
 from ..resources.util.references import ResourceReferenceOption
+from ..resources.spot_fleet import AwsSpotFleetState
 
 
 ConfigType = TypeVar("ConfigType", bound=MachineOptions)
@@ -61,7 +66,7 @@ class EC2TargetDefinition(AwsMachineDefinition[Ec2TargetMachineOptions]):
         #     raise Exception("no AMI defined for EC2 machine ‘{0}’".format(self.name))
         # self.instance_type = self.config.ec2.instanceType
         # self.key_pair = self.config.ec2.keyPair
-        self.private_key = self.config.ec2target.privateKey
+        # self.private_key = self.config.ec2target.privateKey
         # self.security_groups = self.config.ec2.securityGroups
         # self.placement_group = self.config.ec2.placementGroup
         # self.instance_profile = self.config.ec2.instanceProfile
@@ -95,11 +100,11 @@ class EC2TargetDefinition(AwsMachineDefinition[Ec2TargetMachineOptions]):
         # self.route53_private = config.route53.private
 
     def show_type(self):
-        assert False # TODO: use allocated instance.show_type()
+        assert False  # TODO: use allocated instance.show_type()
         # return "{0} [{1}]".format(self.get_type(), self.region or self.zone or "???")
 
     def host_key_type(self):
-        assert False # TODO
+        assert False  # TODO
         # return (
         #     "ed25519"
         #     if nixops.util.parse_nixos_version(self.config.nixosRelease) >= ["15", "09"]
@@ -111,6 +116,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
     """State of an EC2 machine."""
 
     definition_type = EC2TargetDefinition
+    _state: StateDict
 
     @classmethod
     def get_type(cls):
@@ -164,8 +170,9 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
     # first_boot = nixops.util.attr_property("ec2.firstBoot", True, type=bool)
     # virtualization_type = nixops.util.attr_property("ec2.virtualizationType", None)
 
-    def __init__(self, depl, name, id):
-        super().__init__(depl, name, id)
+    def __init__(self, depl: nixops.deployment.Deployment, name: str, id: RecordId):
+        super(AwsMachineState, self).__init__(depl, name, id)
+        self._state = StateDict(depl, id)
         # self._conn = None
         # self._conn_vpc = None
         # self._conn_route53 = None
@@ -173,7 +180,6 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # self._cached_instance = None
 
     def _reset_state(self):
-        assert False  # TODO
         # """Discard all state pertaining to an instance."""
         # with self.depl._db:
         #     self.state = MachineState.MISSING
@@ -208,9 +214,10 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #     self.client_token = None
         #     self.spot_instance_request_id = None
         #     self.spot_instance_price = None
+        return
 
     def get_ssh_name(self):
-        assert False # TODO
+        assert False  # TODO
         # retVal = None
         # if self.use_private_ip_address:
         #     if not self.private_ipv4:
@@ -231,7 +238,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return retVal
 
     def get_ssh_private_key_file(self):
-        assert False # TODO
+        assert False  # TODO
         # if self.private_key_file:
         #     return self.private_key_file
         # if self._ssh_private_key_file:
@@ -251,7 +258,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return None
 
     def get_ssh_flags(self, *args, **kwargs):
-        assert False # TODO
+        assert False  # TODO
         # file = self.get_ssh_private_key_file()
         # super_flags = super(EC2State, self).get_ssh_flags(*args, **kwargs)
         # return super_flags + (["-i", file] if file else [])
@@ -283,7 +290,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         }
 
     def get_physical_backup_spec(self, backupid):
-        assert False # TODO
+        assert False  # TODO
         # module_val: Union[
         #     Dict[Tuple[str, ...], Dict[str, Dict[str, Call]]], RawValue
         # ] = {}
@@ -309,7 +316,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return Function("{ config, pkgs, ... }", module_val)
 
     def get_keys(self):
-        assert False # TODO
+        assert False  # TODO
         # keys = super().get_keys()
         # # Ugly: we have to add the generated keys because they're not
         # # there in the first evaluation (though they are present in
@@ -338,7 +345,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return keys
 
     def show_type(self):
-        assert False # TODO
+        assert False  # TODO
         # s = super(EC2State, self).show_type()
         # if self.zone or self.region:
         #     s = "{0} [{1}; {2}]".format(s, self.zone or self.region, self.instance_type)
@@ -346,24 +353,24 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
     @property
     def resource_id(self):
-        assert False # TODO
+        assert False  # TODO
         # return self.vm_id
 
     def address_to(self, m):
-        assert False # TODO
+        assert False  # TODO
         # if isinstance(m, EC2State):  # FIXME: only if we're in the same region
         #     return m.private_ipv4
         # return super().address_to(m)
 
     def _connect(self):
-        assert False # TODO
+        assert False  # TODO
         # if self._conn:
         #     return self._conn
         # self._conn = nixops_aws.ec2_utils.connect(self.region, self.access_key_id)
         # return self._conn
 
     def _connect_boto3(self):
-        assert False # TODO
+        assert False  # TODO
         # if self._conn_boto3:
         #     return self._conn_boto3
         # self._conn_boto3 = nixops_aws.ec2_utils.connect_ec2_boto3(
@@ -372,7 +379,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return self._conn_boto3
 
     def _connect_vpc(self):
-        assert False # TODO
+        assert False  # TODO
         # if self._conn_vpc:
         #     return self._conn_vpc
         # self._conn_vpc = nixops_aws.ec2_utils.connect_vpc(
@@ -381,7 +388,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return self._conn_vpc
 
     def _connect_route53(self):
-        assert False # TODO
+        assert False  # TODO
         # if self._conn_route53:
         #     return self._conn_route53
 
@@ -394,7 +401,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return self._conn_route53
 
     def _get_spot_instance_request_by_id(self, request_id, allow_missing=False):
-        assert False # TODO
+        assert False  # TODO
         # """Get spot instance request object by id."""
         # try:
         #     result = self._connect().get_all_spot_instance_requests([request_id])
@@ -416,7 +423,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
     def _get_instance(self, instance_id=None, allow_missing=False, update=False):
         """Get instance object for this machine, with caching"""
-        assert False # TODO
+        assert False  # TODO
         # if not instance_id:
         #     instance_id = self.vm_id
         # assert instance_id
@@ -450,7 +457,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return self._cached_instance
 
     def _get_snapshot_by_id(self, snapshot_id):
-        assert False # TODO
+        assert False  # TODO
         # """Get snapshot object by instance id."""
         # snapshots = self._connect().get_all_snapshots([snapshot_id])
         # if len(snapshots) != 1:
@@ -458,8 +465,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return snapshots[0]
 
     def _wait_for_ip(self):
-        assert False # TODO
-        # self.log_start("waiting for IP address... ")
+        self.log_start("waiting for IP address... ")
 
         # def _instance_ip_ready(ins):
         #     ready = True
@@ -506,18 +512,18 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # )
 
     def _ip_for_ssh_key(self):
-        assert False # TODO
+        assert False  # TODO
         # if self.use_private_ip_address:
         #     return self.private_ipv4
         # else:
         #     return self.public_ipv4
 
     def _booted_from_ebs(self):
-        assert False # TODO
+        assert False  # TODO
         # return self.root_device_type == "ebs"
 
     def update_block_device_mapping(self, k, v):
-        assert False # TODO
+        assert False  # TODO
         # x = self.block_device_mapping
         # if v is None:
         #     x.pop(k, None)
@@ -526,7 +532,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # self.block_device_mapping = x
 
     def get_backups(self):
-        assert False # TODO
+        assert False  # TODO
         # if not self.region:
         #     return {}
         # backups: Dict[str, Dict[str, Union[str, List[str]]]] = {}
@@ -564,7 +570,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # return backups
 
     def remove_backup(self, backup_id, keep_physical=False):
-        assert False # TODO
+        assert False  # TODO
         # self.log("removing backup {0}".format(backup_id))
         # _backups = self.backups
         # if backup_id not in _backups.keys():
@@ -587,7 +593,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #     self.backups = _backups
 
     def backup(self, defn, backup_id, devices=[]):
-        assert False # TODO
+        assert False  # TODO
         # self.log("backing up machine ‘{0}’ using id ‘{1}’".format(self.name, backup_id))
         # backup = {}
         # _backups = self.backups
@@ -686,7 +692,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #         self.update_block_device_mapping(device_stored, new_v)
 
     def wait_for_snapshot_to_become_completed(self, snapshot_id):
-        assert False # TODO
+        assert False  # TODO
         # def check_completed():
         #     res = self._get_snapshot_by_id(snapshot_id).status
         #     self.log_continue("[{0}] ".format(res))
@@ -817,7 +823,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #     self.log_end("")
 
     def _assign_elastic_ip(self, elastic_ipv4, check):
-        assert False # TODO
+        assert False  # TODO
         # instance = self._get_instance()
 
         # # Assign or release an elastic IP address, if given.
@@ -903,7 +909,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #             self.ssh_pinged = False
 
     def security_groups_to_ids(self, subnetId, groups):
-        assert False # TODO
+        assert False  # TODO
         # sg_names = [g for g in groups if not g.startswith("sg-")]
         # if sg_names != [] and subnetId != "":
         #     vpc_id = self._connect_vpc().get_all_subnets([subnetId])[0].vpc_id
@@ -950,62 +956,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
         # return instance
 
-    def create_instance(self, defn, zone, user_data, ebs_optimized, args):
-        assert False
-        # IamInstanceProfile = {}
-        # if defn.instance_profile.startswith("arn:"):
-        #     IamInstanceProfile["Arn"] = defn.instance_profile
-        # else:
-        #     IamInstanceProfile["Name"] = defn.instance_profile
-
-        # if defn.subnet_id != "":
-        #     if defn.security_groups and list(defn.security_groups) != ["default"]:
-        #         raise Exception(
-        #             "‘deployment.ec2.securityGroups’ is incompatible with ‘deployment.ec2.subnetId’"
-        #         )
-
-        #     args["NetworkInterfaces"] = [
-        #         dict(
-        #             AssociatePublicIpAddress=defn.associate_public_ip_address,
-        #             SubnetId=defn.subnet_id,
-        #             DeviceIndex=0,
-        #             Groups=self.security_groups_to_ids(
-        #                 defn.subnet_id, defn.security_group_ids
-        #             ),
-        #         )
-        #     ]
-        # else:
-        #     args["SecurityGroups"] = defn.security_groups
-
-        # if defn.spot_instance_price:
-        #     args["InstanceMarketOptions"] = dict(
-        #         MarketType="spot",
-        #         SpotOptions=dict(
-        #             MaxPrice=str(defn.spot_instance_price / 100.0),
-        #             SpotInstanceType=defn.spot_instance_request_type,
-        #             InstanceInterruptionBehavior=defn.spot_instance_interruption_behavior,
-        #         ),
-        #     )
-        #     if defn.spot_instance_timeout:
-        #         args["InstanceMarketOptions"]["SpotOptions"]["ValidUntil"] = (
-        #             datetime.datetime.utcnow()
-        #             + datetime.timedelta(0, defn.spot_instance_timeout)
-        #         ).isoformat()
-
-        # placement = dict(AvailabilityZone=zone or "")
-        # if defn.tenancy:
-        #     placement["Tenancy"] = defn.tenancy
-
-        # args["InstanceType"] = defn.instance_type
-        # args["ImageId"] = defn.ami
-        # args["IamInstanceProfile"] = IamInstanceProfile
-        # args["KeyName"] = defn.key_pair
-        # args["Placement"] = placement
-        # args["UserData"] = user_data
-        # args["EbsOptimized"] = ebs_optimized
-        # args["MaxCount"] = 1  # We always want to deploy one instance.
-        # args["MinCount"] = 1
-
+    def allocate_instance(self, config):
         # # Use a client token to ensure that instance creation is
         # # idempotent; i.e., if we get interrupted before recording
         # # the instance ID, we'll get the same instance ID on the
@@ -1019,26 +970,130 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
         # args["ClientToken"] = self.client_token
 
-        # reservation = self._retry(lambda: self._connect_boto3().run_instances(**args))
+        if config.target.spotFleetRequestId is None:
+            # TODO
+            raise Exception(
+                "(WORK-IN-PROGRESS): Spot fleet requests are the only supported targets for now"
+            )
+        if config.target.spotFleetRequestId.reference is None:
+            raise Exception(
+                "(): Spot fleet with request id `{}` must exist as a nixops resource".format(
+                    config.target.spotFleetRequestId.value
+                )
+            )
 
-        # if not defn.spot_instance_price:
-        #     # On demand instance, no need to any more checks, return it.
-        #     return self._get_instance(reservation["Instances"][0]["InstanceId"])
+        ref = config.spotFleetRequestId.reference
+        spot_fleet = self.depl.get_typed_resource(
+            ref[4:].split(".")[0], "aws-spot-fleet", AwsSpotFleetState
+        )
 
-        # with self.depl._db:
-        #     self.spot_instance_price = defn.spot_instance_price
-        #     self.spot_instance_request_id = reservation["Instances"][0][
-        #         "SpotInstanceRequestId"
-        #     ]
+        # TODO wait for an unallocated instance
+        # TODO possibly use tags to indicate whether an instance is allocated
+        # TODO deallocate/destroy instances when this target is torn down
+        active_instances = []
+        while True:
+            active_instances = spot_fleet._state.get("activeInstances", [])
+            print("ACTIVE INSTANCES", active_instances)
+            if active_instances == []:
+                self.log_continue(".")
+                time.sleep(1)
+                continue
+            else:
+                self.log_end("done")
+                break
 
-        # tags = {"Name": "{0} [{1}]".format(self.depl.description, self.name)}
-        # tags.update(defn.tags)
-        # tags.update(self.get_common_tags())
-        # self._retry(
-        #     lambda: self._connect().create_tags([self.spot_instance_request_id], tags)
-        # )
+        # Return the first available instance
+        # TODO: convert to instance state?
+        return active_instances[0]
 
-        # return self._wait_for_spot_request_fulfillment(self.spot_instance_request_id)
+    # def create_instance(self, defn, zone, user_data, ebs_optimized, args):
+    # IamInstanceProfile = {}
+    # if defn.instance_profile.startswith("arn:"):
+    #     IamInstanceProfile["Arn"] = defn.instance_profile
+    # else:
+    #     IamInstanceProfile["Name"] = defn.instance_profile
+
+    # if defn.subnet_id != "":
+    #     if defn.security_groups and list(defn.security_groups) != ["default"]:
+    #         raise Exception(
+    #             "‘deployment.ec2.securityGroups’ is incompatible with ‘deployment.ec2.subnetId’"
+    #         )
+
+    #     args["NetworkInterfaces"] = [
+    #         dict(
+    #             AssociatePublicIpAddress=defn.associate_public_ip_address,
+    #             SubnetId=defn.subnet_id,
+    #             DeviceIndex=0,
+    #             Groups=self.security_groups_to_ids(
+    #                 defn.subnet_id, defn.security_group_ids
+    #             ),
+    #         )
+    #     ]
+    # else:
+    #     args["SecurityGroups"] = defn.security_groups
+
+    # if defn.spot_instance_price:
+    #     args["InstanceMarketOptions"] = dict(
+    #         MarketType="spot",
+    #         SpotOptions=dict(
+    #             MaxPrice=str(defn.spot_instance_price / 100.0),
+    #             SpotInstanceType=defn.spot_instance_request_type,
+    #             InstanceInterruptionBehavior=defn.spot_instance_interruption_behavior,
+    #         ),
+    #     )
+    #     if defn.spot_instance_timeout:
+    #         args["InstanceMarketOptions"]["SpotOptions"]["ValidUntil"] = (
+    #             datetime.datetime.utcnow()
+    #             + datetime.timedelta(0, defn.spot_instance_timeout)
+    #         ).isoformat()
+
+    # placement = dict(AvailabilityZone=zone or "")
+    # if defn.tenancy:
+    #     placement["Tenancy"] = defn.tenancy
+
+    # args["InstanceType"] = defn.instance_type
+    # args["ImageId"] = defn.ami
+    # args["IamInstanceProfile"] = IamInstanceProfile
+    # args["KeyName"] = defn.key_pair
+    # args["Placement"] = placement
+    # args["UserData"] = user_data
+    # args["EbsOptimized"] = ebs_optimized
+    # args["MaxCount"] = 1  # We always want to deploy one instance.
+    # args["MinCount"] = 1
+
+    # # Use a client token to ensure that instance creation is
+    # # idempotent; i.e., if we get interrupted before recording
+    # # the instance ID, we'll get the same instance ID on the
+    # # next run.
+    # if not self.client_token:
+    #     with self.depl._db:
+    #         self.client_token = nixops.util.generate_random_string(
+    #             length=48
+    #         )  # = 64 ASCII chars
+    #         self.state = self.STARTING
+
+    # args["ClientToken"] = self.client_token
+
+    # reservation = self._retry(lambda: self._connect_boto3().run_instances(**args))
+
+    # if not defn.spot_instance_price:
+    #     # On demand instance, no need to any more checks, return it.
+    #     return self._get_instance(reservation["Instances"][0]["InstanceId"])
+
+    # with self.depl._db:
+    #     self.spot_instance_price = defn.spot_instance_price
+    #     self.spot_instance_request_id = reservation["Instances"][0][
+    #         "SpotInstanceRequestId"
+    #     ]
+
+    # tags = {"Name": "{0} [{1}]".format(self.depl.description, self.name)}
+    # tags.update(defn.tags)
+    # tags.update(self.get_common_tags())
+    # self._retry(
+    #     lambda: self._connect().create_tags([self.spot_instance_request_id], tags)
+    # )
+
+    # return self._wait_for_spot_request_fulfillment(self.spot_instance_request_id)
 
     def _cancel_spot_request(self):
         assert False
@@ -1157,6 +1212,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
             check = True
 
         self.set_common_state(defn)
+        config = self.resolve_config(defn)
 
         # if defn.subnet_id.startswith("res-"):
         #     subnet_res = self.depl.get_typed_resource(
@@ -1175,7 +1231,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #         "please set ‘deployment.ec2.accessKeyId’, $EC2_ACCESS_KEY or $AWS_ACCESS_KEY_ID"
         #     )
 
-        self.private_key_file = defn.private_key or None
+        # self.private_key_file = config.private_key or None # TODO ???
 
         # if self.region is None:
         #     self.region = defn.region
@@ -1259,155 +1315,35 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # resize_root = False
         # update_instance_profile = True
 
-        # # Create the instance.
-        # if not self.vm_id:
+        # Allocate an instance from the target
+        if self.vm_id is not None:
+            self.log(
+                "allocating EC2 instance from target ‘{0}’...".format(
+                    config.target.spotInstanceId
+                    or config.target.spotRequestId
+                    or config.target.spotFleetRequestId
+                )
+            )
+            instance_state = self.allocate_instance(config)
 
-        #     self.log(
-        #         "creating EC2 instance (AMI ‘{0}’, type ‘{1}’, region ‘{2}’)...".format(
-        #             defn.ami, defn.instance_type, self.region
-        #         )
-        #     )
-        #     if not self.client_token and not self.spot_instance_request_id:
-        #         self._reset_state()
-        #         self.region = defn.region
+            with self.depl._db:
+                self.vm_id = instance_state['InstanceId']
+                # self.ami = defn.ami
+                # self.instance_type = defn.instance_type
+                # self.ebs_optimized = ebs_optimized
+                # self.key_pair = defn.key_pair
+                # self.security_groups = defn.security_groups
+                # self.placement_group = defn.placement_group
+                # self.zone = instance.placement
+                # self.tenancy = defn.tenancy
+                # self.instance_profile = defn.instance_profile
+                # self.client_token = None
+                # self.private_host_key = None
 
-        #     # Figure out whether this AMI is EBS-backed.
-        #     amis = self._connect_boto3().describe_images(ImageIds=[defn.ami])
-        #     if len(amis) == 0:
-        #         raise Exception(
-        #             "AMI ‘{0}’ does not exist in region ‘{1}’".format(
-        #                 defn.ami, self.region
-        #             )
-        #         )
-        #     ami = self._connect_boto3().describe_images(ImageIds=[defn.ami])["Images"][
-        #         0
-        #     ]
-        #     self.root_device_type = ami["RootDeviceType"]
-
-        #     # Check if we need to resize the root disk
-        #     resize_root = defn.root_disk_size != 0 and ami["RootDeviceType"] == "ebs"
-
-        #     block_device_mappings: List[Dict[str, Any]] = []
-
-        #     for device_stored, v in defn.block_device_mapping.items():
-        #         device_real = device_name_stored_to_real(device_stored)
-        #         # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html
-        #         ebs_disk = not v["disk"].startswith("ephemeral")
-
-        #         # though /dev/nvme0 is to not recommended, it's not possible that it will appear here, because /dev/nvme0 is always attached as root
-        #         device_name_not_recommended_for_ebs_disks = re.match(
-        #             "/dev/xvd[a-e]", device_real
-        #         )
-
-        #         if ebs_disk and device_name_not_recommended_for_ebs_disks:
-        #             raise Exception(
-        #                 "non-ephemeral disk not allowed on device ‘{0}’; use /dev/xvdf or higher".format(
-        #                     device_real
-        #                 )
-        #             )
-
-        #         if v["disk"].startswith("ephemeral"):
-        #             ephemeral_mapping = dict(
-        #                 DeviceName=device_name_to_boto_expected(device_real),
-        #                 VirtualName=v["disk"],
-        #             )
-        #             block_device_mappings.append(ephemeral_mapping)
-        #             self.update_block_device_mapping(device_stored, v)
-
-        #     args: Dict[str, List[Dict[str, Any]]] = {}
-
-        #     # Set the initial block device mapping to the ephemeral
-        #     # devices defined in the spec.  These cannot be changed
-        #     # later.
-        #     args["BlockDeviceMappings"] = block_device_mappings
-
-        #     root_device = ami["RootDeviceName"]
-        #     if resize_root:
-        #         for dev in ami["BlockDeviceMappings"]:
-        #             if dev["DeviceName"] == root_device:
-        #                 root_mapping = dict(
-        #                     DeviceName=root_device,
-        #                     Ebs=dict(
-        #                         DeleteOnTermination=True,
-        #                         VolumeSize=defn.root_disk_size,
-        #                         VolumeType=dev["Ebs"]["VolumeType"],
-        #                     ),
-        #                 )
-        #                 args["BlockDeviceMappings"].append(root_mapping)
-        #                 break
-        #         else:
-        #             raise Exception(
-        #                 "root device mapping not found for AMI {}".format(
-        #                     ami["ImageId"]
-        #                 )
-        #             )
-
-        #     # If we're attaching any EBS volumes, then make sure that
-        #     # we create the instance in the right placement zone.
-        #     zone = defn.zone or None
-        #     for device_stored, v in defn.block_device_mapping.items():
-        #         if not v["disk"].startswith("vol-"):
-        #             continue
-        #         # Make note of the placement zone of the volume.
-        #         volume = nixops_aws.ec2_utils.get_volume_by_id(self._conn, v["disk"])
-        #         if not zone:
-        #             self.log(
-        #                 "starting EC2 instance in zone ‘{0}’ due to volume ‘{1}’".format(
-        #                     volume.zone, v["disk"]
-        #                 )
-        #             )
-        #             zone = volume.zone
-        #         elif zone != volume.zone:
-        #             raise Exception(
-        #                 "unable to start EC2 instance ‘{0}’ in zone ‘{1}’ because volume ‘{2}’ is in zone ‘{3}’".format(
-        #                     self.name, zone, v["disk"], volume.zone
-        #                 )
-        #             )
-
-        #     # Do we want an EBS-optimized instance?
-        #     prefer_ebs_optimized = False
-        #     for device_stored, v in defn.block_device_mapping.items():
-        #         if v["volumeType"] != "standard":
-        #             prefer_ebs_optimized = True
-
-        #     # if we have PIOPS volume and instance type supports EBS Optimized flags, then use ebs_optimized
-        #     ebs_optimized = prefer_ebs_optimized and defn.ebs_optimized
-        #     # Generate a public/private host key.
-        #     if not self.public_host_key:
-        #         (private, public) = nixops.util.create_key_pair(
-        #             type=defn.host_key_type()
-        #         )
-        #         with self.depl._db:
-        #             self.public_host_key = public
-        #             self.private_host_key = private
-
-        #     user_data = "SSH_HOST_{2}_KEY_PUB:{0}\nSSH_HOST_{2}_KEY:{1}\n".format(
-        #         self.public_host_key,
-        #         self.private_host_key.replace("\n", "|"),
-        #         defn.host_key_type().upper(),
-        #     )
-
-        #     instance = self.create_instance(defn, zone, user_data, ebs_optimized, args)
-        #     update_instance_profile = False
-
-        #     with self.depl._db:
-        #         self.vm_id = instance.id
-        #         self.ami = defn.ami
-        #         self.instance_type = defn.instance_type
-        #         self.ebs_optimized = ebs_optimized
-        #         self.key_pair = defn.key_pair
-        #         self.security_groups = defn.security_groups
-        #         self.placement_group = defn.placement_group
-        #         self.zone = instance.placement
-        #         self.tenancy = defn.tenancy
-        #         self.instance_profile = defn.instance_profile
-        #         self.client_token = None
-        #         self.private_host_key = None
-
-        #     # Cancel spot instance request, it isn't needed after the
-        #     # instance has been provisioned in case of "one-time" requests
-        #     if defn.spot_instance_request_type == "one-time":
-        #         self._cancel_spot_request()
+            # # Cancel spot instance request, it isn't needed after the
+            # # instance has been provisioned in case of "one-time" requests
+            # if defn.spot_instance_request_type == "one-time":
+            #     self._cancel_spot_request()
 
         # # There is a short time window during which EC2 doesn't
         # # know the instance ID yet.  So wait until it does.
@@ -1789,7 +1725,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #         self.update_block_device_mapping(device_stored, v)
 
     def _retry_route53(self, f, error_codes=[]):
-        assert False # TODO
+        assert False  # TODO
         # return nixops_aws.ec2_utils.retry(
         #     f,
         #     error_codes=["Throttling", "PriorRequestNotComplete"] + error_codes,
@@ -1797,7 +1733,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # )
 
     def _update_route53(self, defn):
-        assert False # TODO
+        assert False  # TODO
         # import boto.route53
         # import boto.route53.record
 
