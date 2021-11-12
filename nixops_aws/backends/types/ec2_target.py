@@ -32,6 +32,8 @@ class Ec2TargetOptions(ResourceOptions):
     # target: str
     target: Ec2TargetTargetOptions
     privateKey: str
+    # keyPair: Optional[ResourceReferenceOption[str, str]]
+    # keyPair: str
 
 
 class Ec2TargetMachineOptions(MachineOptions):

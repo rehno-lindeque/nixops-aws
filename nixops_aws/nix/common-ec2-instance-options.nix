@@ -83,6 +83,8 @@ with import ./lib.nix lib;
     example = "my-keypair";
     type = types.either types.str (resource "ec2-keypair");
     apply = x: if builtins.isString x then x else x.name;
+    # TODO
+    # apply = x: if (builtins.isString x || builtins.isNull x) then x else "res-" + x._name + "." + x._type + ".keyPairName";
     description = ''
       Name of the SSH key pair to be used to communicate securely
       with the instance.  Key pairs can be created using the

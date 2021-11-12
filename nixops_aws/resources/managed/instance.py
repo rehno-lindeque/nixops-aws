@@ -107,6 +107,7 @@ class AwsEc2InstanceState(AwsManagedResourceState):
         self._state["publicIpAddress"] = instance["PublicIpAddress"]
         self._state["zone"] = instance["Placement"]["AvailabilityZone"]
         self._state["instanceType"] = instance["InstanceType"]
+        self._state["keyName"] = instance["KeyName"]
 
 
     def _destroy(self):

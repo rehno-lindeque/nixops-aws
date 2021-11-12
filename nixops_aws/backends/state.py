@@ -36,7 +36,6 @@ class AwsMachineState(MachineState, Generic[ConfigT]):
     def resolve_config(self, defn: AwsMachineDefinition):
         # print("resolve_config", defn.resource_eval, defn.config_type)
         env = dict(self.resolve_references(defn))
-        # print("resolve_config env", env)
         return transform_options(defn.resource_eval, defn.config_type, env)
 
     # def resolve_resource(

@@ -12,6 +12,7 @@ from nixops.backends import MachineDefinition, MachineState, MachineOptions
 from nixops.nix_expr import Function, Call, RawValue
 
 from nixops.state import StateDict, RecordId
+
 # import nixops_aws.resources.ec2_common
 # import nixops_aws.resources
 # from nixops.util import (
@@ -23,6 +24,7 @@ from nixops.state import StateDict, RecordId
 # import nixops.known_hosts
 # import datetime
 import time
+
 # from typing import Dict, Tuple, Any, Union, List
 from typing import Type, Generic, TypeVar, Optional
 
@@ -33,6 +35,7 @@ from .state import AwsMachineState
 from .types.ec2_target import Ec2TargetMachineOptions, Ec2TargetOptions
 from ..resources.util.references import ResourceReferenceOption
 from ..resources.spot_fleet import AwsSpotFleetState
+from nixops_aws.resources.ec2_keypair import EC2KeyPairState
 from ..resources.managed.instance import AwsEc2InstanceState
 
 
@@ -123,7 +126,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
     def get_type(cls):
         return "ec2-target"
 
-    # state = nixops.util.attr_property("state", MachineState.MISSING, int)  # override
+    state = nixops.util.attr_property("state", MachineState.MISSING, int)  # override
     # # We need to store this in machine state so wait_for_ip knows what to wait for
     # # Really it seems like this whole class should be parameterized by its definition.
     # # (or the state shouldn't be doing the polling)
@@ -147,7 +150,7 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
     # ami = nixops.util.attr_property("ec2.ami", None)
     # instance_type = nixops.util.attr_property("ec2.instanceType", None)
     # ebs_optimized = nixops.util.attr_property("ec2.ebsOptimized", None, bool)
-    # key_pair = nixops.util.attr_property("ec2.keyPair", None)
+    # key_pair = nixops.util.attr_property("ec2.keyPair", None) # TODO (put in _state)
     # public_host_key = nixops.util.attr_property("ec2.publicHostKey", None)
     # private_host_key = nixops.util.attr_property("ec2.privateHostKey", None)
     # private_key_file = nixops.util.attr_property("ec2.privateKeyFile", None)
@@ -234,34 +237,32 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #         )
         #     retVal = self.public_ipv4
         # return retVal
-        return self._state.get("publicIpAddress") # TODO: or privateIpAddress? (when?)
+        return self._state.get("publicIpAddress")  # TODO: or privateIpAddress? (when?)
 
     def get_ssh_private_key_file(self):
-        assert False  # TODO
+        # TODO
         # if self.private_key_file:
         #     return self.private_key_file
         # if self._ssh_private_key_file:
         #     return self._ssh_private_key_file
-        # for r in self.depl.active_resources.values():
-        #     if type(r) is not nixops_aws.resources.ec2_keypair.EC2KeyPairState:
-        #         continue
+        key_name = self._state.get("keyName")
+        if key_name is not None:
+            for r in self.depl.active_resources.values():
+                if type(r) is not EC2KeyPairState:
+                    continue
 
-        #     kp_r: nixops_aws.resources.ec2_keypair.EC2KeyPairState
-        #     kp_r = r  # type: ignore
+                kp_r: EC2KeyPairState
+                kp_r = r  # type: ignore
 
-        #     if (
-        #         kp_r.state == nixops_aws.resources.ec2_keypair.EC2KeyPairState.UP
-        #         and kp_r.keypair_name == self.key_pair
-        #     ):
-        #         return self.write_ssh_private_key(kp_r.private_key)
-        # return None
+                if kp_r.state == EC2KeyPairState.UP and kp_r.keypair_name == key_name:
+                    return self.write_ssh_private_key(kp_r.private_key)
+        return None
 
     def get_ssh_flags(self, *args, **kwargs):
-        # TODO
-        # file = self.get_ssh_private_key_file()
-        # super_flags = super().get_ssh_flags(*args, **kwargs)
-        # return super_flags + (["-i", file] if file else [])
-        return super().get_ssh_flags(*args, **kwargs)
+        file = self.get_ssh_private_key_file()
+        super_flags = super().get_ssh_flags(*args, **kwargs)
+        print("private_key_file", file)
+        return super_flags + (["-i", file] if file else [])
 
     def get_physical_spec(self):
         # block_device_mapping = {}
@@ -955,7 +956,9 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
         # return instance
 
-    def allocate_instance(self, config: Ec2TargetOptions) -> Optional[AwsEc2InstanceState]:
+    def allocate_instance(
+        self, config: Ec2TargetOptions
+    ) -> Optional[AwsEc2InstanceState]:
         # # Use a client token to ensure that instance creation is
         # # idempotent; i.e., if we get interrupted before recording
         # # the instance ID, we'll get the same instance ID on the
@@ -1007,7 +1010,11 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
 
         # Return the first available instance'
         # TODO: filter by unallocated
-        instances = [r for r in spot_fleet.managed_resources.values() if isinstance(r, AwsEc2InstanceState)]
+        instances = [
+            r
+            for r in spot_fleet.managed_resources.values()
+            if isinstance(r, AwsEc2InstanceState)
+        ]
         if len(instances) > 0:
             return instances[0]
         return None
@@ -1330,19 +1337,21 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
                     or config.ec2target.target.spotFleetRequestId.value
                 )
             )
+            print("ec2target:", config.ec2target.target.spotFleetRequestId)
             instance = self.allocate_instance(config.ec2target)
             if instance is None:
                 raise Exception("No instance available to allocate")
 
             with self.depl._db:
                 instance_id = instance._state["instanceId"]
-                private_ip_address =  instance._state["privateIpAddress"]
-                public_ip_address =  instance._state["publicIpAddress"]
+                private_ip_address = instance._state["privateIpAddress"]
+                public_ip_address = instance._state["publicIpAddress"]
 
                 self.vm_id = instance_id
                 self._state["privateIpAddress"] = private_ip_address
                 self._state["publicIpAddress"] = public_ip_address
                 self._state["zone"] = instance._state["zone"]
+                self._state["keyName"] = instance._state["keyName"]
                 # self.ami = defn.ami
                 # self.instance_type = defn.instance_type
                 # self.ebs_optimized = ebs_optimized
@@ -1359,7 +1368,11 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
             # # instance has been provisioned in case of "one-time" requests
             # if defn.spot_instance_request_type == "one-time":
             #     self._cancel_spot_request()
-            self.log("allocated {0} with public ip address {1}".format(instance_id, public_ip_address))
+            self.log(
+                "allocated {0} with public ip address {1}".format(
+                    instance_id, public_ip_address
+                )
+            )
 
         # # There is a short time window during which EC2 doesn't
         # # know the instance ID yet.  So wait until it does.
@@ -2025,10 +2038,17 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         # self.send_keys()
 
     def _check(self, res):
-        assert False  # TODO
-        # if not self.vm_id:
-        #     res.exists = False
-        #     return
+        print("TODO: check ec2 target")
+
+        if not self.vm_id:
+            res.exists = False
+            return
+
+        # TODO: properly implement _get_instance
+        class TodoInstance:
+            state: str
+
+        instance = TodoInstance(state="running")
 
         # instance = self._get_instance(allow_missing=True)
         # # self.log("instance state is ‘{0}’".format(instance.state if instance else "gone"))
@@ -2039,72 +2059,74 @@ class EC2TargetState(AwsMachineState[Ec2TargetMachineOptions]):
         #     return
 
         # res.exists = True
-        # if instance.state == "pending":
-        #     res.is_up = False
-        #     self.state = self.STARTING
+        if instance.state == "pending":
+            pass
+            # res.is_up = False
+            # self.state = self.STARTING
+        elif instance.state == "running":
+            # res.is_up = True
 
-        # elif instance.state == "running":
-        #     res.is_up = True
+            # res.disks_ok = True
+            # for device_stored, v in self.block_device_mapping.items():
+            #     device_real = device_name_stored_to_real(device_stored)
+            #     device_that_boto_expects = device_name_to_boto_expected(
+            #         device_real
+            #     )  # boto expects only sd names
 
-        #     res.disks_ok = True
-        #     for device_stored, v in self.block_device_mapping.items():
-        #         device_real = device_name_stored_to_real(device_stored)
-        #         device_that_boto_expects = device_name_to_boto_expected(
-        #             device_real
-        #         )  # boto expects only sd names
+            #     mapped_devices = instance.block_device_mapping.keys()
 
-        #         mapped_devices = instance.block_device_mapping.keys()
+            #     if (
+            #         device_that_boto_expects not in mapped_devices
+            #         and device_real not in mapped_devices
+            #         and v.get("volumeId", None)
+            #     ):
+            #         res.disks_ok = False
+            #         res.messages.append(
+            #             "volume ‘{0}’ not attached to ‘{1}’".format(
+            #                 v["volumeId"], device_real
+            #             )
+            #         )
+            #         volume = nixops_aws.ec2_utils.get_volume_by_id(
+            #             self._connect(), v["volumeId"], allow_missing=True
+            #         )
+            #         if not volume:
+            #             res.messages.append(
+            #                 "volume ‘{0}’ no longer exists".format(v["volumeId"])
+            #             )
 
-        #         if (
-        #             device_that_boto_expects not in mapped_devices
-        #             and device_real not in mapped_devices
-        #             and v.get("volumeId", None)
-        #         ):
-        #             res.disks_ok = False
-        #             res.messages.append(
-        #                 "volume ‘{0}’ not attached to ‘{1}’".format(
-        #                     v["volumeId"], device_real
-        #                 )
-        #             )
-        #             volume = nixops_aws.ec2_utils.get_volume_by_id(
-        #                 self._connect(), v["volumeId"], allow_missing=True
-        #             )
-        #             if not volume:
-        #                 res.messages.append(
-        #                     "volume ‘{0}’ no longer exists".format(v["volumeId"])
-        #                 )
+            #     if (
+            #         device_that_boto_expects in instance.block_device_mapping.keys()
+            #         and instance.block_device_mapping[device_that_boto_expects].status
+            #         != "attached"
+            #     ):
+            #         res.disks_ok = False
+            #         res.messages.append(
+            #             "volume ‘{0}’ on device ‘{1}’ has unexpected state: ‘{2}’".format(
+            #                 v["volumeId"],
+            #                 device_real,
+            #                 instance.block_device_mapping[device_stored].status,
+            #             )
+            #         )
 
-        #         if (
-        #             device_that_boto_expects in instance.block_device_mapping.keys()
-        #             and instance.block_device_mapping[device_that_boto_expects].status
-        #             != "attached"
-        #         ):
-        #             res.disks_ok = False
-        #             res.messages.append(
-        #                 "volume ‘{0}’ on device ‘{1}’ has unexpected state: ‘{2}’".format(
-        #                     v["volumeId"],
-        #                     device_real,
-        #                     instance.block_device_mapping[device_stored].status,
-        #                 )
-        #             )
+            # if (
+            #     self.private_ipv4 != instance.private_ip_address
+            #     or self.public_ipv4 != instance.ip_address
+            # ):
+            #     self.warn("IP address has changed, you may need to run ‘nixops deploy’")
+            #     self.private_ipv4 = instance.private_ip_address
+            #     self.public_ipv4 = instance.ip_address
 
-        #     if (
-        #         self.private_ipv4 != instance.private_ip_address
-        #         or self.public_ipv4 != instance.ip_address
-        #     ):
-        #         self.warn("IP address has changed, you may need to run ‘nixops deploy’")
-        #         self.private_ipv4 = instance.private_ip_address
-        #         self.public_ipv4 = instance.ip_address
+            super()._check(res)
 
-        #     super()._check(res)
+        elif instance.state == "stopping":
+            pass
+            # res.is_up = False
+            # self.state = self.STOPPING
 
-        # elif instance.state == "stopping":
-        #     res.is_up = False
-        #     self.state = self.STOPPING
-
-        # elif instance.state == "stopped":
-        #     res.is_up = False
-        #     self.state = self.STOPPED
+        elif instance.state == "stopped":
+            pass
+            # res.is_up = False
+            # self.state = self.STOPPED
 
         # # check for scheduled events
         # instance_status = self._connect().get_all_instance_status(
