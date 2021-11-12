@@ -536,9 +536,8 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         #       In future we should call _check_managed_resources() and let them delete themselves if they've
         #       been terminated.
         for resource_name, resource in dict(self.managed_resources).items():
-            self.log("Deregistering managed resource {}. ".format(resource_name))
             # TODO: call destroy on managed resource?
-            self._delete_managed_resource(resource)
+            self._delete_managed_resource(resource, "spot fleet request canceled")
 
     def wait_for_spot_fleet_request_available(self):
         def check_response_field(name, value, expected_value):
@@ -1071,18 +1070,18 @@ class AwsSpotFleetState(AwsResourceState[AwsSpotFleetOptions], EC2CommonState):
         # Deregister managed resources that no longer exists
         for resource_name, instance in managed_instances.items():
             if instance._state.get("instanceId") not in managed_instances:
-                self.log(
-                    "Deregistering managed resource {} (no longer exists). ".format(
-                        resource_name
-                    )
-                )
+                # self.log(
+                #     "Deregistering managed resource {} (no longer exists). ".format(
+                #         resource_name
+                #     )
+                # )
                 # TODO: call destroy on managed resource?
                 self._delete_managed_resource(instance)
 
         # Register new managed resources
         for instance_id in active_instance_ids - managed_instance_ids:
-            # resource_name = "managed-" + instance_id
             resource_name = instance_id
+            # self.log("Registering new managed resource {}. ".format(resource_name))
 
             # self.managed_resources[resource_name] = AwsEc2InstanceState(
             #     self.depl, resource_name, instance_id

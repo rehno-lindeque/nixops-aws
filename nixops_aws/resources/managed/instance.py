@@ -99,10 +99,15 @@ class AwsEc2InstanceState(AwsManagedResourceState):
             return
 
         self.state = self.resource_status_from_boto(instance["State"]["Name"])
+
+        # TODO: log for now until managed/implicit resources are 1st class
+        self.logger.log("Instance state is {0} (\"{1}\")".format(self.state, instance["State"]["Name"]))
+
         self._state["privateIpAddress"] = instance["PrivateIpAddress"]
         self._state["publicIpAddress"] = instance["PublicIpAddress"]
         self._state["zone"] = instance["Placement"]["AvailabilityZone"]
         self._state["instanceType"] = instance["InstanceType"]
+
 
     def _destroy(self):
         if self.state not in {self.UP, self.STARTING}:

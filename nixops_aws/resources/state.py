@@ -30,7 +30,9 @@ from .util.references import ResourceReferenceOption
 from .util.eval import transform_options
 
 ConfigT = TypeVar("ConfigT", bound=ResourceOptions)
-ManagedResourceStateT = TypeVar("ManagedResourceStateT", bound="AwsManagedResourceState")
+ManagedResourceStateT = TypeVar(
+    "ManagedResourceStateT", bound="AwsManagedResourceState"
+)
 T = TypeVar("T")
 
 
@@ -82,8 +84,16 @@ class AwsResourceState(DiffEngineResourceState, Generic[ConfigT]):
 
     def _create_managed_resource(
         # self, name: str, type: str, cls: Type["AwsManagedResourceState"], **kwargs
-        self, name: str, type: str, cls: Type[ManagedResourceStateT], **kwargs
+        self,
+        name: str,
+        type: str,
+        cls: Type[ManagedResourceStateT],
+        **kwargs
     ) -> ManagedResourceStateT:
+        self.log(
+            "Registering new managed resource {0} ({1}). ".format(name, type)
+        )
+
         def _create_state(depl, type, name, id):
             return cls(depl, name, id, **kwargs)  # type: ignore[call-arg]
 
@@ -108,7 +118,6 @@ class AwsResourceState(DiffEngineResourceState, Generic[ConfigT]):
                      foreign key(machine) references ManagedResources(id) on delete cascade
                    );"""
             )
-
 
             # ???
             # c.execute(
@@ -139,7 +148,12 @@ class AwsResourceState(DiffEngineResourceState, Generic[ConfigT]):
             self.managed_resources[name] = r
         return r
 
-    def _delete_managed_resource(self, m: "AwsManagedResourceState") -> None:
+    def _delete_managed_resource(
+        self, m: "AwsManagedResourceState", reason: str = "no longer exists"
+    ) -> None:
+        self.log(
+            "Deregistering managed resource {0} ({1}). ".format(m.name, reason)
+        )
         with self.depl._db:
             self.depl._db.execute(
                 "delete from ManagedResources where deployment = ? and id = ?",
@@ -195,7 +209,9 @@ class AwsManagedResourceState:
         self.id = id
         self.logger = self.depl.logger.get_logger_for(name)
         self._state = ManagedStateDict(depl, id)
-        self.state = self.UNKNOWN  # TODO: we're not storing state (status) in the db for now
+        self.state = (
+            self.UNKNOWN
+        )  # TODO: we're not storing state (status) in the db for now
 
     def _check(self):
         return True
