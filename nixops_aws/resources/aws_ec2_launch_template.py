@@ -158,9 +158,9 @@ class Ec2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
         }
 
     # fix security group stuff later
-    def security_groups_to_ids(self, subnetId, groups):
+    def security_groups_to_ids(self, groups):
         sg_names = filter(lambda g: not g.startswith("sg-"), groups)
-        if sg_names != [] and subnetId != "":
+        if sg_names != []:
             # Note: we can use ec2_utils.name_to_security_group but it only works with boto2
             group_ids = []
             for i in groups:
@@ -380,7 +380,7 @@ class Ec2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
             ]
             if config.securityGroupIds != []:
                 data["NetworkInterfaces"][0]["Groups"] = self.security_groups_to_ids(
-                    config.subnetId, config.securityGroupIds
+                    config.securityGroupIds
                 )
             if config.networkInterfaceId != "":
                 if config.networkInterfaceId.startswith("res-"):
@@ -412,6 +412,11 @@ class Ec2LaunchTemplateState(nixops.resources.ResourceState, EC2CommonState):
                     )
                     for ip_address in config.privateIpAddresses
                 ]
+        else:
+            # Set security group directly on the launch template if no network interface is defined
+            data["SecurityGroupIds"] = self.security_groups_to_ids(
+                config.securityGroupIds
+            )
         if config.keyPair != "":
             data["KeyName"] = config.keyPair
 
